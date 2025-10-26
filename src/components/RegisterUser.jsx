@@ -49,25 +49,48 @@ const RegisterUser = () => {
   };
 
   // Handle form submit
+//   const handleSubmit = async (e) => {
+//   e.preventDefault();
+//   try {
+//     console.log("Sending form data:", formData);
+//     await api.post("/auth/register", formData);
+//     setStatus({ type: "success", message: "User registered successfully" });
+//     setFormData({
+//       name: "",
+//       email: "",
+//       phone:"",
+//       roleName: "",
+//     });
+//     navigate('/')
+//   } catch (error) {
+//     const errorMessage =
+//       error.response?.data?.error || "Registration failed. Please try again.";
+//     setStatus({ type: "error", message: errorMessage });
+//   }
+// };
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  try {
-    console.log("Sending form data:", formData);
-    await api.post("/auth/register", formData);
-    setStatus({ type: "success", message: "User registered successfully" });
-    setFormData({
-      name: "",
-      email: "",
-      phone:"",
-      roleName: "",
-    });
-    navigate('/')
-  } catch (error) {
-    const errorMessage =
-      error.response?.data?.error || "Registration failed. Please try again.";
-    setStatus({ type: "error", message: errorMessage });
-  }
-};
+    e.preventDefault();
+    try {
+      console.log("Sending form data:", formData);
+      await api.post("/auth/register", formData);
+      setShowSuccessModal(true);
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        roleName: "",
+      });
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.error || "Registration failed. Please try again.";
+      setStatus({ type: "error", message: errorMessage });
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowSuccessModal(false);
+    navigate("/"); // Navigate to home on close
+  };
 
 
   return (
@@ -169,6 +192,20 @@ const RegisterUser = () => {
           </p>
         )}
       </form>
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-96 p-8 text-center">
+            <h2 className="text-2xl font-bold text-green-600 mb-4">Success!</h2>
+            <p className="text-gray-700 mb-6">User registered successfully.</p>
+            <button
+              onClick={handleCloseModal}
+              className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors duration-200"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
