@@ -118,6 +118,12 @@ export default function ManagerDashboard() {
       qc.invalidateQueries({ queryKey: ["leads"] });
       setTimeout(() => setSuccessMsg(""), 2000);
     },
+    onError: (err) => {
+        if (err?.response?.data?.error === 'Lead already existed') {
+          setSuccessMsg('Lead already existed');
+          setTimeout(() => setSuccessMsg(''), 2000);
+        }
+      }
   });
 
   // Lead table actions
