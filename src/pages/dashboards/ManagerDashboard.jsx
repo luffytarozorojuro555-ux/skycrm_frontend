@@ -82,6 +82,7 @@ export default function ManagerDashboard() {
     queryKey: ["teams"],
     queryFn: async () => (await api.get("/team")).data,
   });
+  console.log("team --------",teams.data);
   const leadsQuery = useQuery({
     queryKey: ["leads", filter],
     queryFn: async () =>
@@ -1051,52 +1052,26 @@ export default function ManagerDashboard() {
                       </div>
 
                       {(() => {
-                        // Mock team data
-                        const teamStats = [
-                          {
-                            name: "Alpha Team",
-                            leads: 90,
-                            processing: 20,
-                            success: 30,
-                            failed: 40,
-                          },
-                          {
-                            name: "Beta Team",
-                            leads: 75,
-                            processing: 15,
-                            success: 25,
-                            failed: 35,
-                          },
-                          {
-                            name: "Gamma Team",
-                            leads: 120,
-                            processing: 30,
-                            success: 45,
-                            failed: 45,
-                          },
-                          {
-                            name: "Delta Team",
-                            leads: 85,
-                            processing: 20,
-                            success: 35,
-                            failed: 30,
-                          },
-                          {
-                            name: "Echo Team",
-                            leads: 95,
-                            processing: 25,
-                            success: 40,
-                            failed: 30,
-                          },
-                          {
-                            name: "Foxtrot Team",
-                            leads: 110,
-                            processing: 35,
-                            success: 35,
-                            failed: 40,
-                          },
-                        ];
+                        // Generate real team statistics
+                        const teamStats = teams.data?.map(team => {
+                          const totalLeads = team.leadsAssigned?.length || 0;
+                          const successLeads = team.leadsAssigned?.filter(
+                            lead => lead.status?.name === "enrolled"
+                          ).length || 0;
+                          const failedLeads = team.leadsAssigned?.filter(
+                            lead => lead.status?.name === "not interested"
+                          ).length || 0;
+                          const processingLeads = totalLeads - (successLeads + failedLeads);
 
+                          return {
+                            name: team.name,
+                            leads: totalLeads,
+                            processing: processingLeads,
+                            success: successLeads,
+                            failed: failedLeads,
+                          };
+                        }) || [];
+                        console.log("Team Stats:-----", teamStats);
                         return (
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {teamStats.map((team) => {
