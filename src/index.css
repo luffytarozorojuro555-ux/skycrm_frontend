@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; }
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900 transition-colors duration-200;
+  }
+
+  .dark body {
+    @apply bg-gray-900 text-gray-100;
+  }
+
+  /* Smooth transitions for theme changes */
+  .transition-theme {
+    @apply transition-colors duration-200;
+  }
+
+  /* Default dark mode styles for common elements */
+  .dark {
+    color-scheme: dark;
+  }
+
+  /* Input styles */
+  input, select, textarea {
+    @apply bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600;
+  }
+
+  /* Button styles */
+  button {
+    @apply transition-colors duration-200;
+  }
+
+  /* Table styles */
+  table {
+    @apply bg-white dark:bg-gray-800;
+  }
+
+  th {
+    @apply text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900;
+  }
+
+  td {
+    @apply border-gray-200 dark:border-gray-700;
+  }
+
+  /* Card and panel default styles */
+  .card, .panel {
+    @apply bg-white dark:bg-gray-800 shadow dark:shadow-gray-700/20;
+  }
+}
