@@ -10,11 +10,12 @@ const RegisterUser = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    phone:"",
+    phone: "",
     roleName: "",
   });
 
   const [status, setStatus] = useState({ type: "", message: "" });
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   useEffect(() => {
     if (status.message) {
@@ -38,36 +39,16 @@ const RegisterUser = () => {
   // Handle input change
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if(name=="phone"){
+    if (name == "phone") {
       if (/^\d*$/.test(value) && value.length <= 10) {
         setFormData((prev) => ({ ...prev, [name]: value }));
       }
-    }
-    else{
+    } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
   // Handle form submit
-//   const handleSubmit = async (e) => {
-//   e.preventDefault();
-//   try {
-//     console.log("Sending form data:", formData);
-//     await api.post("/auth/register", formData);
-//     setStatus({ type: "success", message: "User registered successfully" });
-//     setFormData({
-//       name: "",
-//       email: "",
-//       phone:"",
-//       roleName: "",
-//     });
-//     navigate('/')
-//   } catch (error) {
-//     const errorMessage =
-//       error.response?.data?.error || "Registration failed. Please try again.";
-//     setStatus({ type: "error", message: errorMessage });
-//   }
-// };
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -91,7 +72,6 @@ const RegisterUser = () => {
     setShowSuccessModal(false);
     navigate("/"); // Navigate to home on close
   };
-
 
   return (
     <div className="h-screen grid place-items-center bg-gray-50">
@@ -131,7 +111,9 @@ const RegisterUser = () => {
 
         {/*Mobile Number*/}
         <div className="space-y-1">
-          <label className="text-sm font-medium">Set User's Mobile Number</label>
+          <label className="text-sm font-medium">
+            Set User's Mobile Number
+          </label>
           <input
             type="tel"
             name="phone"
@@ -143,7 +125,6 @@ const RegisterUser = () => {
             required
           />
         </div>
-
 
         {/* Role */}
         <div className="space-y-1">
