@@ -128,15 +128,30 @@ export default function ManagerDashboard() {
 
   // Lead table actions
   const onOpen = (lead) => nav(`/leads/${lead._id}`);
+  const deleteLead = useMutation({
+    mutationFn: async (id) => {
+      const res = await api.delete(`/leads/${id}`);
+      return res.data;
+    },
+    onSuccess: (data) => {
+      alert(data.message || "Lead deleted successfully ✅");
+      qc.invalidateQueries({ queryKey: ["leads"] });
+    },
+    onError: (error) => {
+      console.error("Error deleting lead:", error);
+      alert(
+        error?.response?.data?.error ||
+          "❌ Failed to delete lead. Please try again."
+      );
+    },
+  });
+
   const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this lead?")) {
+    if (!id) return;
+    if (window.confirm("⚠️ Are you sure you want to delete this lead?")) {
       deleteLead.mutate(id);
     }
   };
-  const deleteLead = useMutation({
-    mutationFn: async (id) => await api.delete(`/leads/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["leads"] }),
-  });
   const statusMutation = useMutation({
     mutationFn: async (payload) =>
       (
