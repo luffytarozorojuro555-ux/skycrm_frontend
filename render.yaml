@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: skycrm-frontend
+    env: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false # Will be set to backend URL manually in Render dashboard
