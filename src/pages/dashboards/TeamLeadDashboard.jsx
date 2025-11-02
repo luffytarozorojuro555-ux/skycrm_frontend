@@ -402,7 +402,7 @@ export default function TeamLeadDashboard() {
             <Card>
               <TeamMemberPerformance
                 leadsGroupedByMember={leadsGroupedByMember}
-                users={myTeamQuery.data?.members || []}
+                users={myTeamQuery?.data?.members || []}
               />
             </Card>
           </>
@@ -411,27 +411,27 @@ export default function TeamLeadDashboard() {
         {activeTab === "team" && (
           <Card className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden w-full max-w-2xl mx-auto">
             <div className="flex flex-col gap-4">
-              {myTeamQuery.isLoading && (
+              {myTeamQuery?.isLoading && (
                 <p className="text-gray-500 dark:text-gray-300">
                   Loading team member data...
                 </p>
               )}
 
-              {myTeamQuery.isError && (
+              {myTeamQuery?.isError && (
                 <p className="text-red-600 dark:text-red-400">
                   Failed to load team data:{" "}
-                  {myTeamQuery.error?.response?.data?.message || "Server Error"}
+                  {myTeamQuery?.error?.response?.data?.message || "Server Error"}
                 </p>
               )}
 
-              {myTeamQuery.data && (
+              {myTeamQuery?.data && (
                 <>
                   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                     <h2 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">
-                      {myTeamQuery.data.name} Dashboard
+                      {myTeamQuery?.data?.name} Dashboard
                     </h2>
                     <p className="text-sm sm:text-base text-gray-500 dark:text-gray-300">
-                      Manager: {myTeamQuery.data.manager?.name || "N/A"}
+                      Manager: {myTeamQuery?.data?.manager?.name || "N/A"}
                     </p>
                   </div>
 
@@ -464,40 +464,40 @@ export default function TeamLeadDashboard() {
 
                   <div className="flex flex-col gap-2">
                     <h3 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-gray-100">
-                      Team: {myTeamQuery.data.name}
+                      Team: {myTeamQuery?.data?.name}
                     </h3>
                     <p className="text-sm sm:text-base text-gray-500 dark:text-gray-300">
                       Manager:{" "}
                       <span className="font-semibold text-gray-700 dark:text-gray-200">
-                        {myTeamQuery.data.manager.name}
+                        {myTeamQuery?.data?.manager?.name}
                       </span>{" "}
-                      ({myTeamQuery.data.manager.email})
+                      ({myTeamQuery?.data?.manager?.email})
                     </p>
                     <p className="text-sm sm:text-base text-gray-500 dark:text-gray-300">
                       Team Lead (You):{" "}
                       <span className="font-semibold text-gray-700 dark:text-gray-200">
-                        {myTeamQuery.data.lead.name}
+                        {myTeamQuery?.data?.lead?.name}
                       </span>{" "}
-                      ({myTeamQuery.data.lead.email})
+                      ({myTeamQuery?.data?.lead?.email})
                     </p>
                   </div>
 
                   <div className="mt-4">
                     <h4 className="text-md sm:text-lg font-bold text-gray-800 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-1 mb-3">
-                      Sales Representatives ({myTeamQuery.data.members.length})
+                      Sales Representatives ({myTeamQuery?.data?.members?.length})
                     </h4>
                     <ul className="flex flex-col gap-3 ">
-                      {myTeamQuery.data.members.map((member) => (
+                      {myTeamQuery?.data?.members?.map((member) => (
                         <li
-                          key={member._id}
+                          key={member?._id}
                           className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gray-200 dark:bg-gray-700 rounded-xl shadow-sm"
                         >
                           <div>
                             <p className="text-gray-800 dark:text-gray-100 font-semibold">
-                              {member.name}
+                              {member?.name}
                             </p>
                             <p className="text-gray-500 dark:text-gray-300 text-sm">
-                              {member.email}
+                              {member?.email}
                             </p>
                           </div>
                         </li>
@@ -507,9 +507,9 @@ export default function TeamLeadDashboard() {
                 </>
               )}
 
-              {!myTeamQuery.data &&
-                !myTeamQuery.isLoading &&
-                !myTeamQuery.isError && (
+              {!myTeamQuery?.data &&
+                !myTeamQuery?.isLoading &&
+                !myTeamQuery?.isError && (
                   <p className="text-gray-500 dark:text-gray-300">
                     No team information available for this user.
                   </p>

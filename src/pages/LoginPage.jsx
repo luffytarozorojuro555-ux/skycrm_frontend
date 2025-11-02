@@ -86,7 +86,7 @@ export default function LoginPage() {
           "Invalid email or password. Or not authorized to login as this role"
         );
       } else {
-        setError("Login failed. Please try again.");
+        setError(e.response?.data?.error);
       }
     } finally {
       setWaiting(false);
