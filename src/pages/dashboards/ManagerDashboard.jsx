@@ -1600,41 +1600,44 @@ export default function ManagerDashboard() {
           <Card title="All Leads" style={{ marginLeft: 0, paddingLeft: 0 }}>
             {/* Filter + Refresh + Import Data */}
             <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
-              <select
-                onChange={(e) => setFilter(e.target.value)}
-                defaultValue=""
-                style={{
-                  padding: 10,
-                  borderRadius: 8,
-                  border: "1px solid #ccc",
-                  minWidth: 140,
-                  fontSize: 15,
-                }}
-              >
-                <option value="">All Statuses</option>
+               <select
+    onChange={(e) => setFilter(e.target.value)}
+    value={filter}
+    style={{
+      padding: 10,
+      borderRadius: 8,
+      border: "1px solid #ccc",
+      minWidth: 140,
+      fontSize: 15,
+    }}
+  >
+    <option value="">All statuses</option>
+    {statusesQuery.data?.map((s) => (
+      <option key={s.name} value={s.name}>
+        {s.name}
+      </option>
+    ))}
+  </select>
 
-                {statusesQuery.data?.map((s) => (
-                  <option key={s.name} value={s.name}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-              <button
-                style={{
-                  padding: "10px 18px",
-                  background: "#10b981",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 8,
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  fontSize: 15,
-                  boxShadow: "0 2px 8px rgba(16,185,129,0.08)",
-                }}
-                onClick={() => qc.invalidateQueries({ queryKey: ["leads"] })}
-              >
-                Refresh
-              </button>
+  <button
+    style={{
+      padding: "10px 18px",
+      background: "#10b981",
+      color: "white",
+      border: "none",
+      borderRadius: 8,
+      cursor: "pointer",
+      fontWeight: "bold",
+      fontSize: 15,
+      boxShadow: "0 2px 8px rgba(16,185,129,0.08)",
+    }}
+    onClick={() => {
+      setFilter(""); // reset dropdown to “All statuses”
+      qc.invalidateQueries({ queryKey: ["leads"] });
+    }}
+  >
+    Refresh
+  </button>
               <button
                 style={{
                   padding: "10px 18px",
