@@ -56,11 +56,7 @@ export default function HomeRouter() {
               <Route path="/manager" element={<ManagerDashboard />} />
               <Route path="/teamlead" element={<TeamLeadDashboard />} />
               <Route path="/rep" element={<SalesRepDashboard />} />
-<<<<<<< HEAD
               <Route path="/leads/:id/edit" element={<LeadDetailPage />} />
-=======
-              <Route path="/leads/:id" element={<LeadDetailPage />} />
->>>>>>> c4fbf1a242e26ed4913c23b5d9f20b11455a3c29
               <Route path="/registerUser" element={<RegisterUser />} />
               <Route path="/change-password" element={<ChangePassword />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />

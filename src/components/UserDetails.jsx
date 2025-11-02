@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import api from "../services/api";
 import { FaWhatsapp } from "react-icons/fa";
 
-<<<<<<< HEAD
 export default function UserDetails({
   open,
   user,
@@ -14,12 +13,6 @@ export default function UserDetails({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [updateError, setUpdateError] = useState(null);
-=======
-export default function UserDetails({ open, user, onClose, onUserUpdated, onUserDeleted }) {
-  const [userDetails, setUserDetails] = useState(user);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
->>>>>>> c4fbf1a242e26ed4913c23b5d9f20b11455a3c29
   const [editable, setEditable] = useState(false);
 
   useEffect(() => {
@@ -62,7 +55,6 @@ export default function UserDetails({ open, user, onClose, onUserUpdated, onUser
       try {
         const res = await api.put("/users/updateUser", { user: userDetails });
         onUserUpdated(res.data); // update table immediately
-<<<<<<< HEAD
         setEditable(false);
         setUpdateError(null);
         onClose();
@@ -80,18 +72,6 @@ export default function UserDetails({ open, user, onClose, onUserUpdated, onUser
 
   const handleClose = () => {
     setUpdateError(null);
-=======
-      } catch (err) {
-        console.error(err);
-      }
-    }
-    setEditable(false);
-    onClose();
-    setUserDetails(null);
-  };
-
-  const handleClose = () => {
->>>>>>> c4fbf1a242e26ed4913c23b5d9f20b11455a3c29
     setEditable(false);
     setUserDetails(null);
     onClose();
@@ -303,12 +283,9 @@ export default function UserDetails({ open, user, onClose, onUserUpdated, onUser
                 )}
               </div>
             )}
-<<<<<<< HEAD
             {updateError && (
               <p className="text-red-600 text-sm mt-1">{updateError}</p>
             )}
-=======
->>>>>>> c4fbf1a242e26ed4913c23b5d9f20b11455a3c29
           </div>
 
           <div className="flex justify-end mt-8 gap-4">
