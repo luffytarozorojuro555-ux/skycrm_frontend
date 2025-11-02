@@ -9,6 +9,9 @@ import { useState, useEffect } from "react";
 import socket from "../socket";
 import api from "../services/api";
 import useLoadMore from "../hooks/useLoadMore";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+
 
 const logIcons = {
   info: Activity,
@@ -20,6 +23,7 @@ export default function ActivityLogList() {
   const [logs, setLogs] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
+  const navigate = useNavigate();
 
   // Fetch initial logs
   useEffect(() => {
@@ -65,6 +69,19 @@ export default function ActivityLogList() {
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow p-6">
+      <div className="flex items-center justify-between mb-4">
+  <button
+    onClick={() => navigate("/admin")}
+    className="flex items-center gap-2 px-3 py-2 rounded-lg 
+               text-sm font-medium text-gray-700 bg-gray-100 
+               hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 
+               dark:hover:bg-gray-700 transition"
+  >
+    <ArrowLeft className="w-4 h-4" />
+    Back
+  </button>
+</div>
+
       <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center">
         <ClipboardList className="w-5 h-5 mr-2 text-blue-500" />
         Activity Logs
