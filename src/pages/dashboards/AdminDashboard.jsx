@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Loader2, QrCode } from "lucide-react";
@@ -52,8 +51,11 @@ export default function AdminDashboard() {
   const leadsPagination = useQuery({
     queryKey: ["leadsPagination", pageLead, limitLead],
     queryFn: async () =>
-      (await api.get(`/leads/paginationLeadsList?page=${pageLead}&limit=${limitLead}`))
-        .data,
+      (
+        await api.get(
+          `/leads/paginationLeadsList?page=${pageLead}&limit=${limitLead}`
+        )
+      ).data,
     keepPreviousData: true,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
@@ -170,24 +172,24 @@ export default function AdminDashboard() {
             />
           </div>
           {usersPagination.isLoading ? (
-              <div className="flex justify-center items-center py-6 text-blue-600">
-                <Loader2 className="animate-spin w-5 h-5 mr-2" /> Loading
-              </div>
+            <div className="flex justify-center items-center py-6 text-blue-600">
+              <Loader2 className="animate-spin w-5 h-5 mr-2" /> Loading
+            </div>
           ) : (
-              <div>
-                <UsersTable usersData={usersPagination?.data?.users || []} />
-                <PaginationControls
-                   totalPages={usersPagination.data?.totalPages}
-                   page={pageUser}
-                   setPage={setPageUser}
-                />
-              </div>
-            )}
-          </div>
+            <div>
+              <UsersTable usersData={usersPagination?.data?.users || []} />
+              <PaginationControls
+                totalPages={usersPagination.data?.totalPages}
+                page={pageUser}
+                setPage={setPageUser}
+              />
+            </div>
+          )}
+        </div>
       </section>
 
       <section className="grid gap-6 lg:grid-cols-2 mb-10">
-         <div className="bg-white dark:bg-gray-700 p-5 rounded-lg shadow transition-colors">
+        <div className="bg-white dark:bg-gray-700 p-5 rounded-lg shadow transition-colors">
           <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
             Teams
           </h2>
@@ -238,55 +240,55 @@ export default function AdminDashboard() {
               <Loader2 className="animate-spin w-5 h-5 mr-2" /> Loading
             </div>
           ) : (
-           <div>
-            <table className="min-w-full text-sm">
-              <thead className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 uppercase text-xs">
-                <tr>
-                  <th className="px-6 py-3 text-left">Name</th>
-                  <th className="px-6 py-3 text-left">Phone</th>
-                  <th className="px-6 py-3 text-left">Status</th>
-                  <th className="px-6 py-3 text-right">Actions</th>
-                </tr>
-              </thead>
-
-              <tbody className="bg-white dark:bg-gray-700 divide-y divide-gray-200 dark:divide-gray-700">
-                {leadsPagination.data?.leads?.map((lead) => (
-                  <tr
-                    key={lead._id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    <td className="px-6 py-4">
-                      <Link
-                        to={`/leads/${lead._id}`}
-                        className="text-blue-600 dark:text-blue-400 hover:underline"
-                      >
-                        {lead.name}
-                      </Link>
-                    </td>
-                    <td className="px-6 py-4 text-gray-600 dark:text-gray-300">
-                      {lead.phone}
-                    </td>
-                    <td className="px-6 py-4">
-                      <StatusBadge name={lead.status?.name} />
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <Link
-                        to={`/leads/${lead._id}/edit`}
-                        className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300"
-                      >
-                        Edit
-                      </Link>
-                    </td>
+            <div>
+              <table className="min-w-full text-sm">
+                <thead className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 uppercase text-xs">
+                  <tr>
+                    <th className="px-6 py-3 text-left">Name</th>
+                    <th className="px-6 py-3 text-left">Phone</th>
+                    <th className="px-6 py-3 text-left">Status</th>
+                    <th className="px-6 py-3 text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            <PaginationControls
-              totalPages={leadsPagination?.data?.totalPages}
-              page={pageLead}
-              setPage={setPageLead}
-            />
-          </div>
+                </thead>
+
+                <tbody className="bg-white dark:bg-gray-700 divide-y divide-gray-200 dark:divide-gray-700">
+                  {leadsPagination.data?.leads?.map((lead) => (
+                    <tr
+                      key={lead._id}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <td className="px-6 py-4">
+                        <Link
+                          to={`/leads/${lead._id}`}
+                          className="text-blue-600 dark:text-blue-400 hover:underline"
+                        >
+                          {lead.name}
+                        </Link>
+                      </td>
+                      <td className="px-6 py-4 text-gray-600 dark:text-gray-300">
+                        {lead.phone}
+                      </td>
+                      <td className="px-6 py-4">
+                        <StatusBadge name={lead.status?.name} />
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <Link
+                          to={`/leads/${lead._id}/edit`}
+                          className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300"
+                        >
+                          Edit
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <PaginationControls
+                totalPages={leadsPagination?.data?.totalPages}
+                page={pageLead}
+                setPage={setPageLead}
+              />
+            </div>
           )}
         </div>
       </section>
