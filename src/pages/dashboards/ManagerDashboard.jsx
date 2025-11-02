@@ -224,13 +224,20 @@ export default function ManagerDashboard() {
     setShowAddTeam(false);
   };
 
+  const [deleteTeamId, setDeleteTeamId] = useState(null);
   const deleteMutation = useMutation({
     mutationFn: async (team) => await api.delete(`/team/${team._id}`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["teams"] });
+      setDeleteTeamId(null);
+    },
+    onError: (error) => {
+      setDeleteTeamId(null);
+      alert(error?.response?.data?.message);
     },
   });
   const handleTeamDelete = (team) => {
+    setDeleteTeamId(team._id);
     deleteMutation.mutate(team);
   };
 
@@ -1578,10 +1585,11 @@ export default function ManagerDashboard() {
                         Edit Team
                       </button>
                       <button
+                        disabled={t._id === deleteTeamId}
                         className="text-red-500 hover:text-red-700 transition px-3 py-1 rounded-md hover:bg-red-50"
                         onClick={() => handleTeamDelete(t)}
                       >
-                        Delete Team
+                        {deleteTeamId === t._id ? "Deleting" : "Delete"}
                       </button>
 
                       {t.lead !== undefined ? (
