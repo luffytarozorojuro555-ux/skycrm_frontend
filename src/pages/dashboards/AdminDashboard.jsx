@@ -258,12 +258,7 @@ export default function AdminDashboard() {
                       className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                     >
                       <td className="px-6 py-4">
-                        <Link
-                          to={`/leads/${lead._id}`}
-                          className="text-blue-600 dark:text-blue-400 hover:underline"
-                        >
                           {lead.name}
-                        </Link>
                       </td>
                       <td className="px-6 py-4 text-gray-600 dark:text-gray-300">
                         {lead.phone}
