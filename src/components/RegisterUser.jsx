@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { useState } from "react";
 import { useEffect } from "react";
-
+import { ArrowLeft } from "lucide-react";
 const RegisterUser = () => {
   // State for form inputs
   const navigate = useNavigate();
@@ -13,6 +13,7 @@ const RegisterUser = () => {
     phone: "",
     roleName: "",
   });
+
 
   const [status, setStatus] = useState({ type: "", message: "" });
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -75,6 +76,18 @@ const RegisterUser = () => {
 
   return (
     <div className="h-screen grid place-items-center bg-gray-50">
+      <div className="w-full max-w-4xl flex justify-start mb-2 px-4">
+        <button
+          onClick={() => navigate("/admin")}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg 
+                     text-sm font-medium text-gray-700 bg-gray-100 
+                     hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 
+                     dark:hover:bg-gray-700 transition"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back
+        </button>
+      </div>
       <form
         onSubmit={handleSubmit}
         className="bg-white p-6 rounded-2xl shadow w-[360px] space-y-4"
