@@ -194,26 +194,53 @@ export default function AdminDashboard() {
             Teams
           </h2>
 
-          <ul className="space-y-3">
-            {teams.data?.map((team) => (
-              <li
-                key={team._id}
-                className="bg-gray-50 dark:bg-gray-700 px-4 py-3 rounded flex justify-between items-center transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-100">
-                    {team.name}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Lead: {team.lead?.name || "N/A"}
-                  </p>
-                </div>
-                <span className="text-xs bg-indigo-100 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-200 px-2 py-1 rounded-full">
-                  {team.members?.length || 0} Members
-                </span>
-              </li>
-            ))}
-          </ul>
+          <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-600">
+            <table className="min-w-full text-sm text-left border-collapse">
+              <thead className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 uppercase text-xs">
+                <tr>
+                  <th className="px-4 py-3 border-r border-gray-300 dark:border-gray-600">
+                    Team Name
+                  </th>
+                  <th className="px-4 py-3 border-r border-gray-300 dark:border-gray-600">
+                    Team Lead
+                  </th>
+                  <th className="px-4 py-3 text-center">Members</th>
+                </tr>
+              </thead>
+
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                {teams.data?.map((team) => (
+                  <tr
+                    key={team._id}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <td className="px-4 py-3 text-gray-700 dark:text-gray-100 border-r border-gray-200 dark:border-gray-600">
+                      {team.name}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-300 border-r border-gray-200 dark:border-gray-600">
+                      {team.lead?.name || "N/A"}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="text-xs bg-indigo-100 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-200 px-2 py-1 rounded-full">
+                        {team.members?.length || 0} Members
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+
+                {teams.data?.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan="3"
+                      className="text-center py-4 text-gray-500 dark:text-gray-400"
+                    >
+                      No teams available.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 
@@ -241,32 +268,38 @@ export default function AdminDashboard() {
             </div>
           ) : (
             <div>
-              <table className="min-w-full text-sm">
-                <thead className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 uppercase text-xs">
+              <table className="min-w-full text-sm border   border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden shadow-sm">
+                <thead className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 uppercase text-xs border-b border-gray-300 dark:border-gray-600">
                   <tr>
-                    <th className="px-6 py-3 text-left">Name</th>
-                    <th className="px-6 py-3 text-left">Phone</th>
-                    <th className="px-6 py-3 text-left">Status</th>
-                    <th className="px-6 py-3 text-right">Actions</th>
+                    <th className="px-6 py-3 text-center border-r border-gray-300 dark:border-gray-600">
+                      Name
+                    </th>
+                    <th className="px-6 py-3 text-center border-r border-gray-300 dark:border-gray-600">
+                      Phone
+                    </th>
+                    <th className="px-6 py-3 text-center border-r border-gray-300 dark:border-gray-600">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-center">Actions</th>
                   </tr>
                 </thead>
 
-                <tbody className="bg-white dark:bg-gray-700 divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {leadsPagination.data?.leads?.map((lead) => (
                     <tr
                       key={lead._id}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                      className="hover:bg-gray-50 text-center dark:hover:bg-gray-800 transition-colors"
                     >
-                      <td className="px-6 py-4">
-                          {lead.name}
+                      <td className="px-6 py-4 border-r text-center border-gray-300 dark:border-gray-600">
+                        {lead.name}
                       </td>
-                      <td className="px-6 py-4 text-gray-600 dark:text-gray-300">
+                      <td className="px-6 py-4 text-center text-gray-600 dark:text-gray-300 border-r border-gray-300 dark:border-gray-600">
                         {lead.phone}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 text-center border-r border-gray-300 dark:border-gray-600">
                         <StatusBadge name={lead.status?.name} />
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-6 py-4 text-center">
                         <Link
                           to={`/leads/${lead._id}/edit`}
                           className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300"
@@ -278,6 +311,7 @@ export default function AdminDashboard() {
                   ))}
                 </tbody>
               </table>
+
               <PaginationControls
                 totalPages={leadsPagination?.data?.totalPages}
                 page={pageLead}

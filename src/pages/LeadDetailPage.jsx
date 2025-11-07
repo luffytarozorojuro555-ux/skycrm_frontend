@@ -145,14 +145,29 @@ export default function LeadDetailPage() {
           </button>
           <button
             className="rounded-lg bg-purple-600 px-4 py-2 text-white shadow hover:bg-purple-700 transition"
-            onClick={() =>
-              updateLead.mutate(editForm, {
-                onSuccess: () => {
-                  qc.invalidateQueries({ queryKey: ["leads"] });
-                  navigate("/");
-                },
-              })
-            }
+            onClick={() => {
+              // Clean phone before submitting
+              let cleanPhone = editForm.phone.replace(/\D/g, "");
+
+              if (cleanPhone.startsWith("91") && cleanPhone.length > 10) {
+                cleanPhone = cleanPhone.slice(cleanPhone.length - 10);
+              }
+
+              if (cleanPhone.length !== 10) {
+                alert("Please enter a valid 10-digit phone number.");
+                return;
+              }
+
+              updateLead.mutate(
+                { ...editForm, phone: cleanPhone },
+                {
+                  onSuccess: () => {
+                    qc.invalidateQueries({ queryKey: ["leads"] });
+                    navigate("/");
+                  },
+                }
+              );
+            }}
           >
             Save Changes
           </button>
@@ -207,11 +222,27 @@ export default function LeadDetailPage() {
               value={editForm.phone}
               onChange={(e) => {
                 let value = e.target.value;
-                if (/^\d*$/.test(value) && value.length <= 10) {
-                  setEditForm((f) => ({ ...f, phone: e.target.value }));
+
+                // 1️⃣ Remove all non-digit characters
+                value = value.replace(/\D/g, "");
+
+                // 2️⃣ Remove common country codes like +91, 91, 0091, etc.
+                if (value.startsWith("91") && value.length > 10) {
+                  value = value.slice(value.length - 10); // keep only the last 10 digits
+                } else if (value.startsWith("0") && value.length > 10) {
+                  value = value.slice(value.length - 10);
                 }
+
+                // 3️⃣ Limit to 10 digits
+                if (value.length > 10) {
+                  value = value.slice(0, 10);
+                }
+
+                // 4️⃣ Update form
+                setEditForm((f) => ({ ...f, phone: value }));
               }}
             />
+
             <InputField
               label="Email Address"
               icon={<Mail size={16} />}
@@ -348,7 +379,7 @@ export default function LeadDetailPage() {
   );
 }
 
-function InputField({ label, icon, value, onChange, type="text" }) {
+function InputField({ label, icon, value, onChange, type = "text" }) {
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">

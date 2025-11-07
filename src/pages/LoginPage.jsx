@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { setToken } from "../utils/auth";
 import sessionManager from "../utils/sessionManager";
-
+import { jwtDecode } from "jwt-decode";
 import {
   ShieldCheck,
   Users,
@@ -65,9 +65,10 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // console.log("formdatataaaaa",formData," selectedRole==",selectedRole);
+      // console.log("formdatataaaaa", formData, " selectedRole==", selectedRole);
       formData.selectedRole = selectedRole;
       const { data } = await api.post("/auth/login", formData);
+      // console.log("loggedIN", data);
       setToken(data.token);
       setFormData({ email: "", password: "" });
 
@@ -76,6 +77,7 @@ export default function LoginPage() {
 
       navigate(data.user?.defaultPasswordChanged ? "/" : "/change-password");
     } catch (e) {
+      console.log(e);
       const status = e.response?.status;
       if (status === 429) {
         setError(

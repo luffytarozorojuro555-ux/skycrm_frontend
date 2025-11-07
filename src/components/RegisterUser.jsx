@@ -14,7 +14,6 @@ const RegisterUser = () => {
     roleName: "",
   });
 
-
   const [status, setStatus] = useState({ type: "", message: "" });
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
@@ -75,122 +74,165 @@ const RegisterUser = () => {
   };
 
   return (
-    <div className="h-screen grid place-items-center bg-gray-50">
-      <div className="w-full max-w-4xl flex justify-start mb-2 px-4">
+    <div className="min-h-screen flex flex-col items-center justify-center dark:bg-gray-800 bg-gray-50 transition-colors duration-300 px-4">
+      {/* Back Button */}
+      <div className="w-full max-w-4xl flex justify-start mb-4">
         <button
           onClick={() => navigate("/admin")}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg 
-                     text-sm font-medium text-gray-700 bg-gray-100 
-                     hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 
-                     dark:hover:bg-gray-700 transition"
+          className="flex items-center gap-2 text-sm font-medium
+               text-gray-600 hover:text-purple-600 
+               dark:text-gray-300 dark:hover:text-purple-400
+               transition-colors duration-200"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back
+          <span>Back</span>
         </button>
       </div>
+
+      {/* Registration Card */}
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-6 rounded-2xl shadow w-[360px] space-y-4"
+        className="bg-white dark:bg-gray-800 w-full max-w-2xl rounded-2xl shadow-xl p-8 space-y-6 
+               border-2 border-gray-100 dark:border-gray-700 transition-all duration-300"
       >
-        <h1 className="text-xl font-semibold text-center">Register New User</h1>
-
-        {/* Full Name */}
-        <div className="space-y-1">
-          <label className="text-sm font-medium">User's Full Name</label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            placeholder="Enter user's full name"
-            className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            required
-          />
+        {/* Header */}
+        <div className="text-center space-y-2">
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+            Register New User
+          </h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">
+            Fill in the details below to create a new account.
+          </p>
         </div>
 
-        {/* Email */}
-        <div className="space-y-1">
-          <label className="text-sm font-medium">User's Email Address</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="Enter user's email"
-            className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            required
-          />
+        {/* First Row - Full Name + Email */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Full Name */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+              Full Name
+            </label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="Enter user's full name"
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 
+                     bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 
+                     focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none 
+                     transition-all duration-200"
+              required
+            />
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+              Email Address
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Enter user's email"
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 
+                     bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 
+                     focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none 
+                     transition-all duration-200"
+              required
+            />
+          </div>
         </div>
 
-        {/*Mobile Number*/}
-        <div className="space-y-1">
-          <label className="text-sm font-medium">
-            Set User's Mobile Number
-          </label>
-          <input
-            type="tel"
-            name="phone"
-            pattern="[0-9]{10}"
-            value={formData.phone}
-            onChange={handleChange}
-            placeholder="Enter 10 digit mobile number"
-            className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            required
-          />
-        </div>
+        {/* Second Row - Phone + Role */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Phone Number */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+              Mobile Number
+            </label>
+            <input
+              type="tel"
+              name="phone"
+              pattern="[0-9]{10}"
+              value={formData.phone}
+              onChange={handleChange}
+              placeholder="Enter 10-digit mobile number"
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 
+                     bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 
+                     focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none 
+                     transition-all duration-200"
+              required
+            />
+          </div>
 
-        {/* Role */}
-        <div className="space-y-1">
-          <label className="text-sm font-medium">Assign Role</label>
-          <select
-            name="roleName"
-            value={formData.roleName}
-            onChange={handleChange}
-            disabled={rolesQuery.isLoading || rolesQuery.isError}
-            className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            required
-          >
-            <option value="">
-              {rolesQuery.isLoading
-                ? "Loading roles..."
-                : rolesQuery.isError
-                ? "Failed to load roles"
-                : "Select role"}
-            </option>
-            {rolesQuery.data?.map((role) => (
-              <option key={role._id} value={role.name}>
-                {role.name}
+          {/* Role Dropdown */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+              Assign Role
+            </label>
+            <select
+              name="roleName"
+              value={formData.roleName}
+              onChange={handleChange}
+              disabled={rolesQuery.isLoading || rolesQuery.isError}
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 
+                     bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 
+                     focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none 
+                     transition-all duration-200"
+              required
+            >
+              <option value="">
+                {rolesQuery.isLoading
+                  ? "Loading roles..."
+                  : rolesQuery.isError
+                  ? "Failed to load roles"
+                  : "Select a role"}
               </option>
-            ))}
-          </select>
-          {rolesQuery.isError && (
-            <p className="text-red-500 text-sm mt-1">Error fetching roles.</p>
-          )}
+              {rolesQuery.data?.map((role) => (
+                <option key={role._id} value={role.name}>
+                  {role.name}
+                </option>
+              ))}
+            </select>
+            {rolesQuery.isError && (
+              <p className="text-red-500 text-sm mt-1">Error fetching roles.</p>
+            )}
+          </div>
         </div>
 
-        {/* Submit */}
+        {/* Submit Button */}
         <button
-          style={{ paddingTop: "10px" }}
           type="submit"
-          className="w-full py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition"
+          className="w-full py-2.5 bg-purple-600 text-white font-semibold rounded-lg
+                 hover:bg-purple-700 active:bg-purple-800
+                 transition-all duration-200 shadow-md hover:shadow-lg"
         >
           Register New User
         </button>
+
+        {/* Status Message */}
         {status && (
           <p
-            className={
+            className={`text-center text-sm mt-2 ${
               status.type === "success" ? "text-green-600" : "text-red-600"
-            }
+            }`}
           >
             {status.message}
           </p>
         )}
       </form>
+
+      {/* Success Modal */}
       {showSuccessModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-96 p-8 text-center">
-            <h2 className="text-2xl font-bold text-green-600 mb-4">Success!</h2>
-            <p className="text-gray-700 mb-6">User registered successfully.</p>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-8 text-center border border-gray-200 dark:border-gray-700">
+            <h2 className="text-2xl font-bold text-green-600 mb-3">Success!</h2>
+            <p className="text-gray-700 dark:text-gray-300 mb-6">
+              User registered successfully.
+            </p>
             <button
               onClick={handleCloseModal}
               className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors duration-200"

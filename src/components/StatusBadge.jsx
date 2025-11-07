@@ -1,12 +1,18 @@
 const colors = {
-  New: "bg-orange-300 text-gray-800",
-  Contacted: "bg-blue-300 text-blue-800",
-  Registered: "bg-indigo-300 text-indigo-800",
-  Interested: "bg-amber-300 text-amber-800",
-  "Call Back": "bg-yellow-300 text-yellow-800",
-  "Follow-Up": "bg-purple-300 text-purple-800",
-  "Not Interested": "bg-red-300 text-red-800",
-  Enrolled: "bg-green-300 text-green-800",
+  New: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
+  Contacted: "bg-sky-100 text-sky-700 dark:bg-sky-900 dark:text-sky-300",
+  Registered:
+    "bg-indigo-300 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300",
+  Interested:
+    "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300",
+  "Call Back":
+    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
+  "Follow-Up":
+    "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300",
+  "Not Interested":
+    "bg-rose-100 text-rose-700 dark:bg-rose-900 dark:text-rose-300",
+  Enrolled:
+    "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300",
 };
 
 export default function StatusBadge({ name }) {
