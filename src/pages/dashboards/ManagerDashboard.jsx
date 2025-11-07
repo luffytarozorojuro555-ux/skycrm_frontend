@@ -48,6 +48,7 @@ export default function ManagerDashboard() {
   const [importMsg, setImportMsg] = useState("");
   const [mapZoom, setMapZoom] = useState(1);
   const [mapCenter, setMapCenter] = useState([0, 20]);
+  const [curUser, setCurUser] = useState(null);
   const [mapHover, setMapHover] = useState({
     name: null,
     count: 0,
@@ -85,9 +86,26 @@ export default function ManagerDashboard() {
   });
   const leadsQuery = useQuery({
     queryKey: ["leads", filter],
-    queryFn: async () =>
-      (await api.get("/leads", { params: filter ? { status: filter } : {} }))
-        .data,
+      queryFn: async () => {
+      const res = await api.get("/leads", {
+        params: filter ? { status: filter } : {},
+      });
+
+      const currentUserId = res.data.curUser;
+    setCurUser(currentUserId);
+
+    // ✅ Extract all leads first
+    let leads = res.data.leads || [];
+
+    // ✅ Filter leads uploaded by current user only
+    if (currentUserId) {
+      leads = leads.filter(
+        (lead) => lead.uploadedBy?.toString() === currentUserId.toString()
+      );
+    }
+    return leads;
+
+    },
   });
   const statusesQuery = useQuery({
     queryKey: ["statuses"],
@@ -99,8 +117,14 @@ export default function ManagerDashboard() {
     queryKey: ["leads", "unassigned"],
     queryFn: async () => {
       const response = await api.get("/leads");
-      console.log("respose", response);
-      return response.data.filter((lead) => !lead.assignedTo && !lead.teamId);
+      let leads= response.data.leads || [];
+      const currentUserId = response.data.curUser;
+      setCurUser(currentUserId);
+      let unassignedLeads = leads.filter(
+        (lead) => lead.uploadedBy?.toString() === currentUserId.toString()
+      );
+      console.log("respose", unassignedLeads);
+      return unassignedLeads.filter((lead) => !lead.assignedTo && !lead.teamId);
     },
     enabled: showUnassignedLeads,
   });
@@ -109,6 +133,7 @@ export default function ManagerDashboard() {
       unassignedLeadsQuery.refetch();
     }
   });
+  console.log("unassignedLeadsQuery", unassignedLeadsQuery);
 
   const createLead = useMutation({
     mutationFn: async (payload) => (await api.post("/leads", payload)).data,
