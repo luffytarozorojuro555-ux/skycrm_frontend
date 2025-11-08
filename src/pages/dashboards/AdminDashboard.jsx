@@ -21,9 +21,14 @@ export default function AdminDashboard() {
     queryKey: ["users"],
     queryFn: async () => (await api.get("/users")).data,
   });
-  const leads = useQuery({
+   const leads = useQuery({
     queryKey: ["leads"],
-    queryFn: async () => (await api.get("/leads")).data,
+    queryFn: async () => {
+      const res=await api.get("/leads");
+      console.log("Leads data:", res.data);
+      console.log("Leads array:", res.leads);
+      return res.data.leads;
+    },
   });
   const teams = useQuery({
     queryKey: ["teams"],
