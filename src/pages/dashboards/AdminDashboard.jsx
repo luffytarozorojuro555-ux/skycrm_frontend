@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Loader2, QrCode } from "lucide-react";
 import UsersTable from "../../components/UsersTable";
@@ -21,12 +21,10 @@ export default function AdminDashboard() {
     queryKey: ["users"],
     queryFn: async () => (await api.get("/users")).data,
   });
-   const leads = useQuery({
+  const leads = useQuery({
     queryKey: ["leads"],
     queryFn: async () => {
-      const res=await api.get("/leads");
-      console.log("Leads data:", res.data);
-      console.log("Leads array:", res.leads);
+      const res = await api.get("/leads");
       return res.data.leads;
     },
   });
@@ -98,6 +96,53 @@ export default function AdminDashboard() {
       icon: <Clock className="w-6 h-6 text-red-600" />,
     },
   ];
+
+  const [showManagerPopup, setShowManagerPopup] = useState(false);
+  const [selectedTeamId, setSelectedTeamId] = useState(null);
+  const [selectedManager, setSelectedManager] = useState(null);
+
+  const managersQuery = useQuery({
+    queryKey: ["managers"],
+    queryFn: async () => {
+      try {
+        // 1. Get role ID
+        const roleRes = await api.get("/roles/getRoleId", {
+          params: { name: "Sales Manager" },
+        });
+
+        const roleId = roleRes.data.roleId;
+
+        // 2. Get managers
+        const managersRes = await api.post("/users/usersByRole", { roleId });
+
+        console.log("Managers res:", managersRes.data);
+
+        return managersRes.data; // ✅ Actual return to React Query
+      } catch (err) {
+        console.log("Error:", err);
+        return []; // ✅ Always return something
+      }
+    },
+  });
+  
+  const queryClient = useQueryClient();
+  const assignManager = useMutation({
+    mutationFn: async ({ teamId, managerId }) => {
+      const res = await api.post("/team/setManager", { teamId, managerId });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["teams"]);
+      setShowManagerPopup(false); // close popup
+      setSelectedManager(null);
+      setSelectedTeamId(null);
+    },
+    onError: (err) => {
+      console.log("Error assigning manager:", err);
+    },
+  });
+
+  console.log("Teams data:", teams.data);
 
   return (
     <div className="min-h-screen  w-full p-6 overflow-x-hidden">
@@ -193,7 +238,7 @@ export default function AdminDashboard() {
         </div>
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-2 mb-10">
+      <section className="grid gap-6 mb-10">
         <div className="bg-white dark:bg-gray-700 p-5 rounded-lg shadow transition-colors">
           <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
             Teams
@@ -209,7 +254,15 @@ export default function AdminDashboard() {
                   <th className="px-4 py-3 border-r border-gray-300 dark:border-gray-600">
                     Team Lead
                   </th>
-                  <th className="px-4 py-3 text-center">Members</th>
+                  <th className="px-4 py-3 border-r border-gray-300 dark:border-gray-600 text-center">
+                    Members
+                  </th>
+                  <th className="px-4 py-3 border-r border-gray-300 dark:border-gray-600">
+                    Manager
+                  </th>
+                  <th className="px-4 py-3 border-r border-gray-300 dark:border-gray-600">
+                    Assign to Manager
+                  </th>
                 </tr>
               </thead>
 
@@ -225,10 +278,28 @@ export default function AdminDashboard() {
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-300 border-r border-gray-200 dark:border-gray-600">
                       {team.lead?.name || "N/A"}
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-300 border-r border-gray-200 dark:border-gray-600">
                       <span className="text-xs bg-indigo-100 dark:bg-indigo-800 text-indigo-700 dark:text-indigo-200 px-2 py-1 rounded-full">
                         {team.members?.length || 0} Members
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-300 border-r border-gray-200 dark:border-gray-600">
+                      {team.manager?.name || "Not Assigned"}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-300 border-r border-gray-200 dark:border-gray-600">
+                      {team.manager?.role?.name === "Admin" ? (
+                        <button
+                          onClick={() => {
+                            setSelectedTeamId(team._id);
+                            setShowManagerPopup(true);
+                          }}
+                          className="text-blue-600 underline"
+                        >
+                          Show available managers
+                        </button>
+                      ) : (
+                        "Not Applicable"
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -326,6 +397,72 @@ export default function AdminDashboard() {
           )}
         </div>
       </section>
+      {showManagerPopup && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-2xl w-11/12 max-w-md md:max-w-lg lg:max-w-xl border border-gray-200 dark:border-gray-700">
+            {/* Title */}
+            <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">
+              Select Manager
+            </h2>
+
+            {/* Managers list with scroll */}
+            <div className="max-h-60 overflow-y-auto pr-2">
+              {managersQuery.isLoading ? (
+                <p className="text-gray-500">Loading managers...</p>
+              ) : (
+                <ul className="space-y-2">
+                  {managersQuery.data?.map((manager) => (
+                    <li
+                      key={manager._id}
+                      onClick={() => setSelectedManager(manager)} // <--- store selected
+                      className={`p-3 border rounded-lg cursor-pointer transition 
+                  ${
+                    selectedManager?._id === manager._id
+                      ? "bg-blue-100 dark:bg-blue-800 border-blue-500"
+                      : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                  }`}
+                    >
+                      {manager?.name} ({manager?.email})
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            {/* Buttons */}
+            <div className="flex justify-end gap-3 mt-5">
+              <button
+                onClick={() => {
+                  setShowManagerPopup(false);
+                  setSelectedManager(null);
+                }}
+                className="px-4 py-2 rounded-lg bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+              >
+                Cancel
+              </button>
+
+              <button
+                disabled={!selectedManager}
+                onClick={() =>
+                  assignManager.mutate({
+                    teamId: selectedTeamId,
+                    managerId: selectedManager._id,
+                  })
+                }
+                className={`px-4 py-2 rounded-lg text-white 
+            ${
+              selectedManager
+                ? "bg-blue-600 hover:bg-blue-700"
+                : "bg-blue-300 cursor-not-allowed"
+            }
+          `}
+              >
+                Assign
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
