@@ -53,7 +53,18 @@ export default function TeamLeadDashboard() {
   });
 
   // States for leads displayed and filtered
-  const [teamLeads, setTeamLeads] = useState([]);
+  //const [teamLeads, setTeamLeads] = useState([]);
+  const teamLeads = useMemo(() => {
+  const allLeads = Array.isArray(leadsQuery.data)
+    ? leadsQuery.data
+    : [];
+
+  if (!myTeamQuery.data?._id) return [];
+
+  return allLeads.filter(
+    (lead) => lead.teamId?._id === myTeamQuery.data._id
+  );
+}, [leadsQuery.data, myTeamQuery.data]);
   const [displayedLeads, setDisplayedLeads] = useState([]);
 
   // Synchronize teamLeads from myTeamQuery data whenever it changes
