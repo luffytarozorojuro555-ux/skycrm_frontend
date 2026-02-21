@@ -69,17 +69,17 @@ export default function TeamLeadDashboard() {
 
   // Synchronize teamLeads from myTeamQuery data whenever it changes
   console.log("myTeamQuery", myTeamQuery.data);
-  useEffect(() => {
-    if (leadsQuery.data && myTeamQuery.data?._id) {
-      // Filter leads belonging to this team only
-      const filteredLeads = leadsQuery.data.filter(
-        (lead) => lead.teamId?._id === myTeamQuery.data._id
-      );
-      setTeamLeads(filteredLeads);
-    } else {
-      setTeamLeads([]);
-    }
-  }, [leadsQuery.data, myTeamQuery.data]);
+  // useEffect(() => {
+  //   if (leadsQuery.data && myTeamQuery.data?._id) {
+  //     // Filter leads belonging to this team only
+  //     const filteredLeads = leadsQuery.data.filter(
+  //       (lead) => lead.teamId?._id === myTeamQuery.data._id
+  //     );
+  //     setTeamLeads(filteredLeads);
+  //   } else {
+  //     setTeamLeads([]);
+  //   }
+  // }, [leadsQuery.data, myTeamQuery.data]);
 
   //console.log("teamLeads", teamLeads);
 
