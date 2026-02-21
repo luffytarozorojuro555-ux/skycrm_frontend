@@ -291,7 +291,8 @@ export default function ManagerDashboard() {
 
   // Geocode unique cities from leads using a lightweight, cached lookup via Nominatim (throttled)
   useEffect(() => {
-    const leads = Array.isArray(leadsQuery.data) ? leadsQuery.data : [];
+    //const leads = Array.isArray(leadsQuery.data) ? leadsQuery.data : [];
+    const leads = Array.isArray(leadsQuery.data)? leadsQuery.data: leadsQuery.data?.leads || [];
     const toKey = (s) => (s || "").toString().trim().toLowerCase();
     const uniqueCities = Array.from(
       new Set(leads.map((l) => toKey(l.city)).filter(Boolean))
@@ -481,7 +482,8 @@ export default function ManagerDashboard() {
 
               {/* Compute analytics */}
               {(() => {
-                const leads = leadsQuery.data || [];
+                //const leads = leadsQuery.data || [];
+            const leads = Array.isArray(leadsQuery.data)? leadsQuery.data: leadsQuery.data?.leads || [];
                 const palette = [
                   "#6366F1",
                   "#22C55E",
@@ -1406,7 +1408,8 @@ export default function ManagerDashboard() {
                       </div>
 
                       {(() => {
-                        const leads = leadsQuery.data || [];
+                        //const leads = leadsQuery.data || [];
+                    const leads = Array.isArray(leadsQuery.data)? leadsQuery.data: leadsQuery.data?.leads || [];
                         const toKey = (s) =>
                           (s || "").toString().trim().toLowerCase();
                         const counts = leads.reduce((acc, l) => {
