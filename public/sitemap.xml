@@ -3,12 +3,31 @@
 
   <url>
     <loc>https://skycrm.co.in/</loc>
-    <lastmod>2026-02-22</lastmod>
     <priority>1.0</priority>
   </url>
 
   <url>
-    <loc>https://skycrm.co.in/login</loc>
+    <loc>https://skycrm.co.in/pricing</loc>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://skycrm.co.in/features</loc>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://skycrm.co.in/crm-for-small-business-india</loc>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://skycrm.co.in/crm-for-startups</loc>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://skycrm.co.in/blog</loc>
     <priority>0.8</priority>
   </url>
 
