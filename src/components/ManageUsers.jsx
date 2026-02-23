@@ -21,7 +21,7 @@ const ManageUsers = () => {
         const res = await api.post("/users/usersByRole", {
           roleId: selectedRoleId,
         });
-        setUsersData(res.data);
+        setUsersData(res.data.users || []);
       } catch (err) {
         console.error(err);
       }
