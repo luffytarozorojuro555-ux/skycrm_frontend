@@ -19,13 +19,24 @@ export default function TeamLeadDashboard() {
   const [showCustomDateRange, setShowCustomDateRange] = useState(false);
 
   // Fetch team data including leads assigned to the team and team members
-  const leadsQuery = useQuery({
-    queryKey: ["leads", filter],
-    queryFn: async () =>
-      (await api.get("/leads", { params: filter ? { status: filter } : {} }))
-        .data,
-  });
+  // const leadsQuery = useQuery({
+  //   queryKey: ["leads", filter],
+  //   queryFn: async () =>
+  //     (await api.get("/leads", { params: filter ? { status: filter } : {} }))
+  //       .data,
+  // });
   //console.log("leadsQuery", leadsQuery.data);
+
+  const leadsQuery = useQuery({
+  queryKey: ["leads", filter],
+  queryFn: async () => {
+    const response = await api.get("/leads", {
+      params: filter ? { status: filter } : {},
+    });
+
+    return response.data.leads;  // 🔥 IMPORTANT FIX
+  },
+});
 
   const myTeamQuery = useQuery({
     queryKey: ["myTeam"],
