@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import ContactModal from "../components/ContactModal";
 import {
   CloudIcon,
   Shield,
@@ -48,6 +49,7 @@ export default function AllLogin() {
   ];
 
   const navigate = useNavigate();
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
   const handleSelect = (roleKey) => {
     navigate("/login", { state: { role: roleKey } });
@@ -440,8 +442,11 @@ export default function AllLogin() {
               >
                 Start Free 30-Day Trial
               </button>
-              <button className="px-8 py-3 border-2 border-white text-white hover:bg-white/10 bg-transparent rounded-lg font-medium text-lg transition-colors">
-                Schedule a Demo
+              <button
+                onClick={() => setIsContactModalOpen(true)}
+                className="px-8 py-3 border-2 border-white text-white hover:bg-white/10 bg-transparent rounded-lg font-medium text-lg transition-colors"
+              >
+                Contact Us
               </button>
             </div>
             <p className="text-blue-100 text-sm pt-4">
@@ -474,6 +479,10 @@ export default function AllLogin() {
           </div>
         </div>
       </footer>
+      <ContactModal
+        isOpen={isContactModalOpen}
+        onClose={() => setIsContactModalOpen(false)}
+      />
     </div>
   );
 }
