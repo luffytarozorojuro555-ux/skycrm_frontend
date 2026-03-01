@@ -6,6 +6,7 @@ import Card from "../../components/Card";
 import LeadTable from "../../components/LeadTable";
 import handleLogout from "../../logoutHandler";
 import CustomDateRange from "../../components/CustomDateRange";
+import { getUserFromToken } from "../../utils/auth";
 
 export default function SalesRepDashboard() {
   const qc = useQueryClient();
@@ -19,11 +20,17 @@ export default function SalesRepDashboard() {
   const [endDate, setEndDate] = useState(null);
   const [showCustomDateRange, setShowCustomDateRange] = useState(false);
 
+  const user = getUserFromToken();
+
   // Fetch only my leads (assigned to current user)
   const myleads = useQuery({
-    queryKey: ["leads", "assignedTo", "me"],
-    queryFn: async () => (await api.get("/leads?assignedTo=me")).data,
-    refetchInterval: 5000,
+    queryKey: ["leads", "assignedTo", user?.id],
+    queryFn: async () => {
+      const res = await api.get("/leads?assignedTo=me");
+      return res.data.leads; 
+    },
+    enabled: !!user?.userId,
+    refetchOnWindowFocus: true,
   });
   // (removed global leads query) - this dashboard uses only 'my leads'
   const statuses = useQuery({
@@ -104,11 +111,11 @@ export default function SalesRepDashboard() {
   // Analytics calculations based on filtered leads
   const totalFilteredLeads = filteredLeads.length;
   const enrolledCount = filteredLeads.filter(
-    (l) => l.status?.name === "Enrolled"
+    (l) => l.status?.name === "Enrolled",
   ).length;
   const newCount = filteredLeads.filter((l) => l.status?.name === "New").length;
   const notInterestedCount = filteredLeads.filter(
-    (l) => l.status?.name === "Not Interested"
+    (l) => l.status?.name === "Not Interested",
   ).length;
   const processingCount =
     totalFilteredLeads - (enrolledCount + newCount + notInterestedCount);
