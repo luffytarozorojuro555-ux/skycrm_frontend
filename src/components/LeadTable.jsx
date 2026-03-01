@@ -11,6 +11,7 @@ export default function LeadTable({ leads, onOpen, onDelete, hideAction, statuse
           <th>City</th>
           <th>Source</th>
           <th>Status</th>
+          <th>Assigned to</th>
           {!hideAction && <th>Action</th>}
         </tr>
       </thead>
@@ -38,6 +39,7 @@ export default function LeadTable({ leads, onOpen, onDelete, hideAction, statuse
                 lead.status?.name || '-'
               )}
             </td>
+            <td>{lead.assignedTo.email}</td>
             {!hideAction && (
               <td>
                 <button className="text-blue-600 underline mr-2" onClick={() => onOpen(lead)}>Open</button>
