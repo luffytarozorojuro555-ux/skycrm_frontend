@@ -407,17 +407,35 @@ export default function ManagerDashboard() {
   };
 
   const [leadSearchTerm, setLeadSearchTerm] = useState("");
-  const filteredLeadsData = useMemo(() => {
-    if (leadSearchTerm.trim() === "") return visibleData;
+  // const filteredLeadsData = useMemo(() => {
+  //   if (leadSearchTerm.trim() === "") return visibleData;
 
-    const value = leadSearchTerm.toLowerCase();
-    return visibleData.filter(
+  //   const value = leadSearchTerm.toLowerCase();
+  //   return visibleData.filter(
+  //     (lead) =>
+  //       lead.name?.toLowerCase().includes(value) ||
+  //       lead.email?.toLowerCase().includes(value)
+  //   );
+  // }, [leadSearchTerm, visibleData]);
+
+const filteredLeadsData = useMemo(() => {
+  if (!Array.isArray(visibleData)) return [];
+
+  if (leadSearchTerm.trim() === "") {
+    return visibleData.filter(Boolean); // removes undefined/null
+  }
+
+  const value = leadSearchTerm.toLowerCase();
+
+  return visibleData
+    .filter(Boolean)
+    .filter(
       (lead) =>
-        lead.name?.toLowerCase().includes(value) ||
-        lead.email?.toLowerCase().includes(value)
+        lead?.name?.toLowerCase().includes(value) ||
+        lead?.email?.toLowerCase().includes(value)
     );
-  }, [leadSearchTerm, visibleData]);
-
+}, [leadSearchTerm, visibleData]);
+  
   const handleLeadSearch = (e) => {
     setLeadSearchTerm(e.target.value.trim());
   };
