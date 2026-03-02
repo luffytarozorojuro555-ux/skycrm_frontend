@@ -19,7 +19,7 @@ export default function LeadTable({ leads, onOpen, onDelete, hideAction, statuse
         {sortedLeads.map(lead => (
           <tr key={lead._id}>
             <td>{lead.name}</td>
-            <td>{lead.email}</td>
+            <td>{lead.email || '-'}</td>
             <td>{lead.phone}</td>
             <td>{lead.city || '-'}</td>
             <td>{lead.source || '-'}</td>
