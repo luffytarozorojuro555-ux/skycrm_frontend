@@ -9,35 +9,35 @@ const CustomDateRange = ({open, onClose, onCustomRangeFetch }) => {
 
   const today = new Date().toISOString().split("T")[0];
 
-  // const handleFetch = async () => {
-  //   if (!startDate || !endDate) {
-  //     alert("Please select both start and end dates");
-  //     return;
-  //   }
-  //   setLoading(true);
-  //   onCustomRangeFetch(startDate, endDate);
-  //   onClose();
-  // };
-  const handleFetch = () => {
-  if (!startDate || !endDate) {
-    alert("Please select both start and end dates");
-    return;
-  }
-  setLoading(true);
-  onCustomRangeFetch(startDate, endDate);
-  onClose();
-};
-  // const handleCancel = async () => {
-  //   onClose();
-  //   setStartDate(null);
-  //   setEndDate(null);
-  //   onCustomRangeFetch(startDate, endDate);
-  // };
-  const handleCancel = () => {
-  setStartDate("");
-  setEndDate("");
-  onClose();
-};
+  const handleFetch = async () => {
+    if (!startDate || !endDate) {
+      alert("Please select both start and end dates");
+      return;
+    }
+    setLoading(true);
+    onCustomRangeFetch(startDate, endDate);
+    onClose();
+  };
+//   const handleFetch = () => {
+//   if (!startDate || !endDate) {
+//     alert("Please select both start and end dates");
+//     return;
+//   }
+//   setLoading(true);
+//   onCustomRangeFetch(startDate, endDate);
+//   onClose();
+// };
+  const handleCancel = async () => {
+    onClose();
+    setStartDate(null);
+    setEndDate(null);
+    onCustomRangeFetch(startDate, endDate);
+  };
+//   const handleCancel = () => {
+//   setStartDate("");
+//   setEndDate("");
+//   onClose();
+// };
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/50">
       <div className="bg-white p-6 rounded-2xl shadow-xl w-96">
