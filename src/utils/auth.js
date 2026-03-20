@@ -34,6 +34,10 @@ export const clearToken = () => {
 
 export const isRememberMe = () => localStorage.getItem('rememberMe') === 'true'
 
+export const isRemembered = () => {
+  return localStorage.getItem('rememberMe') === 'true';
+};
+
 export const setRememberMe = (remember, email = '') => {
   if (remember) {
     localStorage.setItem('rememberMe', 'true')
