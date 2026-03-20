@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 
-export default function useLoadMore(data = [], initialCount = 10, step = 10) {
+export default function useLoadMore(data = [], initialCount = 50, step = 50) {
   const [visibleCount, setVisibleCount] = useState(initialCount);
 
 
