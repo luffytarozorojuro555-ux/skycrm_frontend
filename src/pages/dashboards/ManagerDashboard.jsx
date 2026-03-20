@@ -1746,6 +1746,20 @@ const filteredLeadsData = useMemo(() => {
                   }}
                 >
                   <div style={{ fontWeight: "bold" }}>Import CSV</div>
+
+{/* ✅ ADD THIS DOWNLOAD BUTTON */}
+<a
+  href="/sampledata.csv"
+  download
+  style={{
+    fontSize: 13,
+    color: "#4f46e5",
+    textDecoration: "underline",
+    cursor: "pointer",
+  }}
+>
+  ⬇ Download Sample CSV
+</a>
                   <input
                     type="file"
                     accept=".csv"
