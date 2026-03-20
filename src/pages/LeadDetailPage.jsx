@@ -122,7 +122,147 @@ export default function LeadDetailPage() {
         <StatusBadge name={data.status?.name} />
       </div>
 
-      {/* Status & Buttons */}
+      
+
+      {loading && (
+        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+          <LoadingSpinner size={32} color="border-purple-500" />
+        </div>
+      )}
+
+      {/* Card with Tabs */}
+      <div className="dark:bg-gray-900 rounded-xl shadow p-6">
+        <div className="flex gap-6 border-b border-gray-700">
+          <button
+            className={`pb-2 font-medium ${
+              tab === "details"
+                ? "text-purple-500 border-b-2 border-purple-500"
+                : "text-gray-500"
+            }`}
+            onClick={() => setTab("details")}
+          >
+            Details
+          </button>
+          <button
+            className={`pb-2 font-medium ${
+              tab === "history"
+                ? "text-red-500 border-b-2 border-red-500"
+                : "text-gray-500"
+            }`}
+            onClick={() => setTab("history")}
+          >
+            History
+          </button>
+        </div>
+
+        {/* Details Tab */}
+        {tab === "details" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+            <InputField
+              label="Full Name"
+              icon={<User size={16} />}
+              value={editForm.name}
+              onChange={(e) =>
+                setEditForm((f) => ({ ...f, name: e.target.value }))
+              }
+            />
+           
+            <InputField
+  label="Phone Number"
+  icon={<Phone size={16} />}
+  value={editForm.phone}
+  onChange={() => {}}
+  readOnly
+/>
+
+            <InputField
+  label="Email Address"
+  icon={<Mail size={16} />}
+  value={editForm.email}
+  onChange={() => {}}
+  readOnly
+/>
+            <InputField
+              label="City"
+              icon={<MapPin size={16} />}
+              value={editForm.city}
+              onChange={(e) =>
+                setEditForm((f) => ({ ...f, city: e.target.value }))
+              }
+            />
+            <InputField
+              label="Source"
+              icon={<Link2 size={16} />}
+              value={editForm.source}
+              onChange={(e) =>
+                setEditForm((f) => ({ ...f, source: e.target.value }))
+              }
+            />
+            <InputField
+              label="College"
+              icon={<GraduationCap size={16} />}
+              value={editForm.college}
+              onChange={(e) =>
+                setEditForm((f) => ({ ...f, college: e.target.value }))
+              }
+            />
+            <InputField
+  label="Year of Passout"
+  icon={<Calendar size={16} />}
+  value={editForm.yearOfPassout}
+  onChange={(e) => {
+    let year = e.target.value.replace(/\D/g, "");
+    if (year.length > 4) year = year.slice(0, 4);
+    setEditForm((f) => ({ ...f, yearOfPassout: year }));
+  }}
+/>
+            <div className="md:col-span-2 mt-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Comments
+              </label>
+              <div className="space-y-3 mt-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Write a comment..."
+                    className="flex-1 border rounded-lg px-3 py-2 dark:bg-gray-800 dark:text-gray-100 outline-none"
+                  />
+                  <button
+                    onClick={() => addComment.mutate({ text: newComment })}
+                    className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
+                  >
+                    Add Comment
+                  </button>
+                </div>
+                {/* Existing comments */}
+                <div className="mt-4 space-y-2 max-h-48 overflow-y-auto">
+                  {data.comments?.length > 0 ? (
+                    data.comments
+                      .slice()
+                      .reverse()
+                      .map((c, i) => (
+                        <div
+                          key={i}
+                          className="border border-gray-700 rounded-lg p-2 text-sm dark:text-gray-200"
+                        >
+                          <p>{c.text}</p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            — {c.by?.name || "Unknown"} (
+                            {new Date(c.at).toLocaleString()})
+                          </p>
+                        </div>
+                      ))
+                  ) : (
+                    <p className="text-gray-500 text-sm">No comments yet.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* Status & Buttons */}
       <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <select
           className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 px-4 py-2"
@@ -173,164 +313,6 @@ export default function LeadDetailPage() {
           </button>
         </div>
       </div>
-
-      {loading && (
-        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-          <LoadingSpinner size={32} color="border-purple-500" />
-        </div>
-      )}
-
-      {/* Card with Tabs */}
-      <div className="dark:bg-gray-900 rounded-xl shadow p-6">
-        <div className="flex gap-6 border-b border-gray-700">
-          <button
-            className={`pb-2 font-medium ${
-              tab === "details"
-                ? "text-purple-500 border-b-2 border-purple-500"
-                : "text-gray-500"
-            }`}
-            onClick={() => setTab("details")}
-          >
-            Details
-          </button>
-          <button
-            className={`pb-2 font-medium ${
-              tab === "history"
-                ? "text-red-500 border-b-2 border-red-500"
-                : "text-gray-500"
-            }`}
-            onClick={() => setTab("history")}
-          >
-            History
-          </button>
-        </div>
-
-        {/* Details Tab */}
-        {tab === "details" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-            <InputField
-              label="Full Name"
-              icon={<User size={16} />}
-              value={editForm.name}
-              onChange={(e) =>
-                setEditForm((f) => ({ ...f, name: e.target.value }))
-              }
-            />
-            <InputField
-              label="Phone Number"
-              icon={<Phone size={16} />}
-              value={editForm.phone}
-              onChange={(e) => {
-                let value = e.target.value;
-
-                // 1️⃣ Remove all non-digit characters
-                value = value.replace(/\D/g, "");
-
-                // 2️⃣ Remove common country codes like +91, 91, 0091, etc.
-                if (value.startsWith("91") && value.length > 10) {
-                  value = value.slice(value.length - 10); // keep only the last 10 digits
-                } else if (value.startsWith("0") && value.length > 10) {
-                  value = value.slice(value.length - 10);
-                }
-
-                // 3️⃣ Limit to 10 digits
-                if (value.length > 10) {
-                  value = value.slice(0, 10);
-                }
-
-                // 4️⃣ Update form
-                setEditForm((f) => ({ ...f, phone: value }));
-              }}
-            />
-
-            <InputField
-              label="Email Address"
-              icon={<Mail size={16} />}
-              value={editForm.email}
-              onChange={(e) =>
-                setEditForm((f) => ({ ...f, email: e.target.value }))
-              }
-            />
-            <InputField
-              label="City"
-              icon={<MapPin size={16} />}
-              value={editForm.city}
-              onChange={(e) =>
-                setEditForm((f) => ({ ...f, city: e.target.value }))
-              }
-            />
-            <InputField
-              label="Source"
-              icon={<Link2 size={16} />}
-              value={editForm.source}
-              onChange={(e) =>
-                setEditForm((f) => ({ ...f, source: e.target.value }))
-              }
-            />
-            <InputField
-              label="College"
-              icon={<GraduationCap size={16} />}
-              value={editForm.college}
-              onChange={(e) =>
-                setEditForm((f) => ({ ...f, college: e.target.value }))
-              }
-            />
-            <InputField
-              type="date"
-              label="Year of Passout"
-              icon={<Calendar size={16} />}
-              value={editForm.yearOfPassout}
-              onChange={(e) =>
-                setEditForm((f) => ({ ...f, yearOfPassout: e.target.value }))
-              }
-            />
-            <div className="md:col-span-2 mt-4">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Comments
-              </label>
-              <div className="space-y-3 mt-2">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Write a comment..."
-                    className="flex-1 border rounded-lg px-3 py-2 dark:bg-gray-800 dark:text-gray-100 outline-none"
-                  />
-                  <button
-                    onClick={() => addComment.mutate({ text: newComment })}
-                    className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
-                  >
-                    Add Comment
-                  </button>
-                </div>
-                {/* Existing comments */}
-                <div className="mt-4 space-y-2 max-h-48 overflow-y-auto">
-                  {data.comments?.length > 0 ? (
-                    data.comments
-                      .slice()
-                      .reverse()
-                      .map((c, i) => (
-                        <div
-                          key={i}
-                          className="border border-gray-700 rounded-lg p-2 text-sm dark:text-gray-200"
-                        >
-                          <p>{c.text}</p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            — {c.by?.name || "Unknown"} (
-                            {new Date(c.at).toLocaleString()})
-                          </p>
-                        </div>
-                      ))
-                  ) : (
-                    <p className="text-gray-500 text-sm">No comments yet.</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* History Tab */}
         {tab === "history" && (
           <div className="flow-root flex-col mt-6">
@@ -379,7 +361,7 @@ export default function LeadDetailPage() {
   );
 }
 
-function InputField({ label, icon, value, onChange, type = "text" }) {
+function InputField({ label, icon, value, onChange, type = "text", readOnly = false }) {
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -392,8 +374,28 @@ function InputField({ label, icon, value, onChange, type = "text" }) {
           className="ml-2 flex-1 outline-none dark:bg-gray-900 dark:text-gray-100"
           value={value}
           onChange={onChange}
+          readOnly={readOnly}
         />
       </div>
     </div>
   );
 }
+
+// function InputField({ label, icon, value, onChange, type = "text" }) {
+//   return (
+//     <div>
+//       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+//         {label}
+//       </label>
+//       <div className="mt-1 flex items-center rounded-lg border border-gray-600 px-3 py-2 shadow-sm focus-within:ring-2 focus-within:ring-purple-200">
+//         {icon}
+//         <input
+//           type={type}
+//           className="ml-2 flex-1 outline-none dark:bg-gray-900 dark:text-gray-100"
+//           value={value}
+//           onChange={onChange}
+//         />
+//       </div>
+//     </div>
+//   );
+// }
