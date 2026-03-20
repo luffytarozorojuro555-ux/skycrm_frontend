@@ -261,8 +261,9 @@ export default function LeadDetailPage() {
               </div>
             </div>
           </div>
-        )}
-        {/* Status & Buttons */}
+        
+        
+      {/* Status & Buttons */}
       <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <select
           className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 px-4 py-2"
@@ -313,6 +314,7 @@ export default function LeadDetailPage() {
           </button>
         </div>
       </div>
+        )}
         {/* History Tab */}
         {tab === "history" && (
           <div className="flow-root flex-col mt-6">
