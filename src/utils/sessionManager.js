@@ -1,5 +1,6 @@
 import api from '../services/api';
-import { clearToken, getToken } from './auth';
+//import { clearToken, getToken } from './auth';
+import { clearToken, getToken, isRemembered } from './auth';
 
 class SessionManager {
   constructor() {
@@ -62,6 +63,7 @@ class SessionManager {
   async handleBeforeUnload(event) {
     // Only trigger pending logout if not a reload or navigation
     if (this.isReloading) return;
+    if (isRemembered()) return;
     if (!this.isLoggingOut && !this.isNavigating && getToken()) {
       try {
         // Send pending logout to backend (do not clear token)
@@ -89,6 +91,7 @@ class SessionManager {
     sessionStorage.setItem('lastUnloadTime', Date.now().toString());
     // Skip if we detected a reload via any method
     if (this.isReloading || (Date.now() - this.lastReloadTime < 2000)) return;
+    if (isRemembered()) return;
     if (!this.isLoggingOut && !this.isNavigating && getToken()) {
       try {
         // Use beacon-friendly endpoint so the request reaches the server when tab/window closes
