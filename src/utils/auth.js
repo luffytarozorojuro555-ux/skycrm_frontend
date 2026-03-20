@@ -15,16 +15,10 @@ export const getToken = () => {
   return localStorage.getItem('token') || sessionStorage.getItem('token')
 }
 
-export const setToken = (t, remember = false) => {
-  if (!t) return
-  if (remember) {
-    localStorage.setItem('token', t)
-    localStorage.setItem('rememberMe', 'true')
-  } else {
-    sessionStorage.setItem('token', t)
-    localStorage.removeItem('rememberMe')
-  }
-}
+export const setToken = (t) => {
+  if (!t) return;
+  localStorage.setItem('token', t); // always store token
+};
 
 export const clearToken = () => {
   localStorage.removeItem('token')
