@@ -301,7 +301,8 @@ export default function LoginPage() {
       formData.selectedRole = selectedRole;
       const { data } = await api.post("/auth/login", formData);
       // console.log("loggedIN", data);
-      setToken(data.token, rememberMe);
+      //setToken(data.token, rememberMe);
+      setToken(data.token);
       setRememberMe(rememberMe, formData.email);
 
       if (!rememberMe) {
