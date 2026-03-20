@@ -1745,21 +1745,27 @@ const filteredLeadsData = useMemo(() => {
                     flexWrap: "wrap",
                   }}
                 >
-                  <div style={{ fontWeight: "bold" }}>Import CSV</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+  <div style={{ fontWeight: "bold" }}>Import CSV</div>
 
-{/* ✅ ADD THIS DOWNLOAD BUTTON */}
-<a
-  href="/sampledata.csv"
-  download
-  style={{
-    fontSize: 13,
-    color: "#4f46e5",
-    textDecoration: "underline",
-    cursor: "pointer",
-  }}
->
-  ⬇ Download Sample CSV
-</a>
+  <a
+    href="/sampledata.csv"
+    download
+    style={{
+      fontSize: 13,
+      color: "#4f46e5",
+      textDecoration: "underline",
+      cursor: "pointer",
+      width: "fit-content",
+    }}
+  >
+    ⬇ Download Sample CSV
+  </a>
+
+  <div style={{ fontSize: 12, color: "#6b7280" }}>
+    Use this format to avoid upload errors
+  </div>
+</div>
                   <input
                     type="file"
                     accept=".csv"
