@@ -252,7 +252,7 @@ const handleReportClick = (type) => {
 
       <main className="flex-1 p-0 mt-4">
         {activeTab === "home" && (
-          <>
+          
             <Card
               title="My Analytics Overview"
               className="mt-6  dark:bg-gray-800 text-white"
@@ -301,7 +301,7 @@ const handleReportClick = (type) => {
                                     transition: "stroke-dashoffset 400ms ease",
                                   }}
                                 />
-                              </>
+                              
                             );
                           })()}
                         </svg>
@@ -312,7 +312,7 @@ const handleReportClick = (type) => {
                           </span>
                         </div>
                       </div>
-
+                    </div>
                       {/* Time Range Buttons */}
                       <div className="relative" ref={dropdownRef}>
   <button
