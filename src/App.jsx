@@ -54,7 +54,7 @@ export default function App() {
 function Protected({ children }) {
   const [isValidating, setIsValidating] = useState(true);
   const [isValid, setIsValid] = useState(false);
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     async function validateSession() {
