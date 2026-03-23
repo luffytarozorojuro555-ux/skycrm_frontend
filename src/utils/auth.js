@@ -53,3 +53,14 @@ export const getUserFromToken = () => {
     return null
   }
 }
+export const isTokenExpired = () => {
+  const t = getToken();
+  if (!t) return true;
+
+  try {
+    const decoded = jwtDecode(t);
+    return decoded.exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
+};
