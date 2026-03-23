@@ -6,20 +6,23 @@ const api = axios.create({
 })
 
 api.interceptors.request.use(cfg => {
-  const t = localStorage.getItem.("token")
-  if(t) cfg.headers.Authorization = `Bearer ${t}`
+  const token = localStorage.getItem("token")
+  if(token) cfg.headers.Authorization = `Bearer ${token}`
   return cfg
 })
 
 api.interceptors.response.use(
   res => res,
   err => {
-    if(err.response && err.response.status === 401){
-      clearToken()
-      window.location.href = '/login/select'
+    const token = getToken();
+
+    if (err.response && err.response.status === 401 && token) {
+      clearToken();
+      window.location.href = '/login/select';
     }
-    return Promise.reject(err)
+
+    return Promise.reject(err);
   }
-)
+);
 
 export default api;
