@@ -17,6 +17,7 @@ export default function TeamLeadDashboard() {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [showCustomDateRange, setShowCustomDateRange] = useState(false);
+  const [dataScope, setDataScope] = useState("mine"); 
 
   // Fetch team data including leads assigned to the team and team members
   // const leadsQuery = useQuery({
@@ -134,6 +135,18 @@ export default function TeamLeadDashboard() {
     setDisplayedLeads(filteredLeads);
   }, [teamLeads, filter, timeRange, startDate, endDate]);
 
+const tableLeads = useMemo(() => {
+  const teamLeadId = myTeamQuery.data?.lead?._id;
+
+  if (dataScope === "mine") {
+    return displayedLeads.filter(
+      (lead) => lead.assignedTo?._id === teamLeadId
+    );
+  }
+
+  return displayedLeads;
+}, [displayedLeads, myTeamQuery.data, dataScope]);
+  
   // Mutation for deleting a lead
   const deleteLead = useMutation({
     mutationFn: async (id) => await api.delete(`/leads/${id}`),
@@ -578,45 +591,95 @@ export default function TeamLeadDashboard() {
             title="My Team's Leads"
             style={{ marginLeft: 0, paddingLeft: 0 }}
           >
-            <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
-              <select
-                onChange={(e) => setFilter(e.target.value)}
-                value={filter}
-                style={{
-                  padding: 10,
-                  borderRadius: 8,
-                  border: "1px solid #ccc",
-                  minWidth: 140,
-                  fontSize: 15,
-                }}
-              >
-                <option value="">All Statuses</option>
-                {statusesQuery.data?.map((s) => (
-                  <option key={s.name} value={s.name}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-              <button
-                style={{
-                  padding: "10px 18px",
-                  background: "#10b981",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 8,
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  fontSize: 15,
-                  boxShadow: "0 2px 8px rgba(16,185,129,0.08)",
-                }}
-                onClick={() => {
-                  qc.invalidateQueries({ queryKey: ["leads"] });
-                  qc.invalidateQueries({ queryKey: ["myTeam"] });
-                }}
-              >
-                Refresh
-              </button>
-            </div>
+            <div
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+    flexWrap: "wrap",
+    gap: 10,
+  }}
+>
+  {/* LEFT SIDE */}
+  <div style={{ display: "flex", gap: 12 }}>
+    <select
+      onChange={(e) => setFilter(e.target.value)}
+      value={filter}
+      style={{
+        padding: 10,
+        borderRadius: 8,
+        border: "1px solid #ccc",
+        minWidth: 140,
+        fontSize: 15,
+      }}
+    >
+      <option value="">All Statuses</option>
+      {statusesQuery.data?.map((s) => (
+        <option key={s.name} value={s.name}>
+          {s.name}
+        </option>
+      ))}
+    </select>
+
+    <button
+      style={{
+        padding: "10px 18px",
+        background: "#10b981",
+        color: "white",
+        border: "none",
+        borderRadius: 8,
+        cursor: "pointer",
+        fontWeight: "bold",
+        fontSize: 15,
+      }}
+      onClick={() => {
+        qc.invalidateQueries({ queryKey: ["leads"] });
+        qc.invalidateQueries({ queryKey: ["myTeam"] });
+      }}
+    >
+      Refresh
+    </button>
+  </div>
+
+  {/* RIGHT SIDE FILTER 🔥 */}
+  <div
+    style={{
+      display: "flex",
+      border: "1px solid #ccc",
+      borderRadius: 8,
+      overflow: "hidden",
+    }}
+  >
+    <button
+      onClick={() => setDataScope("mine")}
+      style={{
+        padding: "8px 16px",
+        background: dataScope === "mine" ? "#2563eb" : "transparent",
+        color: dataScope === "mine" ? "#fff" : "#333",
+        border: "none",
+        cursor: "pointer",
+        fontWeight: "bold",
+      }}
+    >
+      My Data
+    </button>
+
+    <button
+      onClick={() => setDataScope("team")}
+      style={{
+        padding: "8px 16px",
+        background: dataScope === "team" ? "#2563eb" : "transparent",
+        color: dataScope === "team" ? "#fff" : "#333",
+        border: "none",
+        cursor: "pointer",
+        fontWeight: "bold",
+      }}
+    >
+      All Data
+    </button>
+  </div>
+</div>
 
             <div style={{ width: "100%", overflowX: "auto" }}>
               <div
@@ -632,7 +695,7 @@ export default function TeamLeadDashboard() {
                   <p>Loading...</p>
                 ) : (
                   <LeadTable
-                    leads={displayedLeads}
+                    leads={tableLeads}
                     onOpen={onOpen}
                     onDelete={handleDelete}
                     statuses={statusesQuery.data}
