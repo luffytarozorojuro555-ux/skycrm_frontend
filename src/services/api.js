@@ -2,13 +2,13 @@ import axios from 'axios'
 import { getToken, clearToken } from '../utils/auth'
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL //|| "https://skycrm-backend.onrender.com/api"
+  baseURL: import.meta.env.VITE_API_URL
 })
 
 api.interceptors.request.use(cfg => {
-  const t = localStorage.getItem("token")
-  if(t) cfg.headers.Authorization = `Bearer ${t}`
-  return cfg
+  const t = getToken();
+  if (t) cfg.headers.Authorization = `Bearer ${t}`;
+  return cfg;
 })
 
 api.interceptors.response.use(
@@ -16,7 +16,11 @@ api.interceptors.response.use(
   err => {
     const token = getToken();
 
-    if (err.response && err.response.status === 401 && token) {
+    if (
+      err?.response?.status === 401 &&
+      token &&
+      window.location.pathname !== '/login/select'
+    ) {
       clearToken();
       window.location.href = '/login/select';
     }
