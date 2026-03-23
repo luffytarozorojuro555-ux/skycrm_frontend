@@ -317,9 +317,9 @@ const handleReportClick = (type) => {
                       <div className="relative" ref={dropdownRef}>
   <button
     onClick={() => setShowOptions((prev) => !prev)}
-    className="px-3 py-1.5 rounded-md bg-indigo-600 text-white"
+    className="px-3 py-1.5 rounded-md text-white"
   >
-    Generate Report
+    
   </button>
 
   {showOptions && (
