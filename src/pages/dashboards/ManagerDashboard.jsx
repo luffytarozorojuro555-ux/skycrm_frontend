@@ -44,6 +44,7 @@ export default function ManagerDashboard() {
   const [teamToEdit, setTeamToEdit] = useState(null);
   const [importOpen, setImportOpen] = useState(false);
   const [importSource, setImportSource] = useState("");
+const [customSource, setCustomSource] = useState("");
   const [importFile, setImportFile] = useState(null);
   const [importMsg, setImportMsg] = useState("");
   const [mapZoom, setMapZoom] = useState(1);
@@ -1771,16 +1772,36 @@ const filteredLeadsData = useMemo(() => {
                     accept=".csv"
                     onChange={(e) => setImportFile(e.target.files?.[0] || null)}
                   />
-                  <input
-                    placeholder="Source (e.g., Facebook Ads)"
-                    value={importSource}
-                    onChange={(e) => setImportSource(e.target.value)}
-                    style={{
-                      padding: 8,
-                      border: "1px solid #ddd",
-                      borderRadius: 6,
-                    }}
-                  />
+                  <select
+  value={importSource}
+  onChange={(e) => setImportSource(e.target.value)}
+  style={{
+    padding: 8,
+    border: "1px solid #ddd",
+    borderRadius: 6,
+  }}
+>
+  <option value="">Select Source</option>
+  <option value="Facebook">Facebook</option>
+  <option value="WhatsApp">WhatsApp</option>
+  <option value="Instagram">Instagram</option>
+  <option value="Other">Other</option>
+</select>
+
+{/* Show input only if "Other" */}
+{importSource === "Other" && (
+  <input
+    placeholder="Enter custom source"
+    value={customSource}
+    onChange={(e) => setCustomSource(e.target.value)}
+    style={{
+      padding: 8,
+      border: "1px solid #ddd",
+      borderRadius: 6,
+      marginTop: 8,
+    }}
+  />
+)}
                   <button
                     style={{
                       padding: "8px 14px",
