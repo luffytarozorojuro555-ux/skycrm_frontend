@@ -277,32 +277,32 @@ const handleReportClick = (type) => {
                             const r = 8;
                             const c = 2 * Math.PI * r;
                             const off = c * (1 - remainingPct / 100);
-                            return (
-                              <>
-                                <circle
-                                  cx="12"
-                                  cy="12"
-                                  r={r}
-                                  stroke="#4b5563"
-                                  strokeWidth="4"
-                                  fill="none"
-                                />
-                                <circle
-                                  cx="12"
-                                  cy="12"
-                                  r={r}
-                                  stroke="#22c55e"
-                                  strokeWidth="4"
-                                  fill="none"
-                                  strokeDasharray={c}
-                                  strokeDashoffset={off}
-                                  strokeLinecap="round"
-                                  style={{
-                                    transition: "stroke-dashoffset 400ms ease",
-                                  }}
-                                />
-                              
-                            );
+                            return [
+  <circle
+    key="bg"
+    cx="12"
+    cy="12"
+    r={r}
+    stroke="#4b5563"
+    strokeWidth="4"
+    fill="none"
+  />,
+  <circle
+    key="progress"
+    cx="12"
+    cy="12"
+    r={r}
+    stroke="#22c55e"
+    strokeWidth="4"
+    fill="none"
+    strokeDasharray={c}
+    strokeDashoffset={off}
+    strokeLinecap="round"
+    style={{
+      transition: "stroke-dashoffset 400ms ease",
+    }}
+  />
+];
                           })()}
                         </svg>
                         <div className="text-xs text-gray-700 dark:text-gray-200">
