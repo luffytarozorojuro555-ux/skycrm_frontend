@@ -395,7 +395,6 @@ const handleReportClick = (type) => {
                 </div>
               </div>
             </Card>
-          </>
         )}
 
         {activeTab === "data" && (
