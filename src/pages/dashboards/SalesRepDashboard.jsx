@@ -394,6 +394,7 @@ const handleReportClick = (type) => {
                   </div>
                 </div>
               </div>
+              </div>
             </Card>
         )}
 
