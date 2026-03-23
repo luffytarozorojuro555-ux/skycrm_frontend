@@ -156,165 +156,173 @@ export default function LeadDetailPage() {
         </div>
 
         {/* Details Tab */}
-        {tab === "details" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-            <InputField
-              label="Full Name"
-              icon={<User size={16} />}
-              value={editForm.name}
-              onChange={(e) =>
-                setEditForm((f) => ({ ...f, name: e.target.value }))
-              }
-            />
-           
-            <InputField
-  label="Phone Number"
-  icon={<Phone size={16} />}
-  value={editForm.phone}
-  onChange={() => {}}
-  readOnly
-/>
+{tab === "details" && (
+  <>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+      <InputField
+        label="Full Name"
+        icon={<User size={16} />}
+        value={editForm.name}
+        onChange={(e) =>
+          setEditForm((f) => ({ ...f, name: e.target.value }))
+        }
+      />
 
-            <InputField
-  label="Email Address"
-  icon={<Mail size={16} />}
-  value={editForm.email}
-  onChange={() => {}}
-  readOnly
-/>
-            <InputField
-              label="City"
-              icon={<MapPin size={16} />}
-              value={editForm.city}
-              onChange={(e) =>
-                setEditForm((f) => ({ ...f, city: e.target.value }))
-              }
+      <InputField
+        label="Phone Number"
+        icon={<Phone size={16} />}
+        value={editForm.phone}
+        onChange={() => {}}
+        readOnly
+      />
+
+      <InputField
+        label="Email Address"
+        icon={<Mail size={16} />}
+        value={editForm.email}
+        onChange={() => {}}
+        readOnly
+      />
+
+      <InputField
+        label="City"
+        icon={<MapPin size={16} />}
+        value={editForm.city}
+        onChange={(e) =>
+          setEditForm((f) => ({ ...f, city: e.target.value }))
+        }
+      />
+
+      <InputField
+        label="Source"
+        icon={<Link2 size={16} />}
+        value={editForm.source}
+        onChange={(e) =>
+          setEditForm((f) => ({ ...f, source: e.target.value }))
+        }
+      />
+
+      <InputField
+        label="College"
+        icon={<GraduationCap size={16} />}
+        value={editForm.college}
+        onChange={(e) =>
+          setEditForm((f) => ({ ...f, college: e.target.value }))
+        }
+      />
+
+      <InputField
+        label="Year of Passout"
+        icon={<Calendar size={16} />}
+        value={editForm.yearOfPassout}
+        onChange={(e) => {
+          let year = e.target.value.replace(/\D/g, "");
+          if (year.length > 4) year = year.slice(0, 4);
+          setEditForm((f) => ({ ...f, yearOfPassout: year }));
+        }}
+      />
+
+      <div className="md:col-span-2 mt-4">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          Comments
+        </label>
+
+        <div className="space-y-3 mt-2">
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Write a comment..."
+              className="flex-1 border rounded-lg px-3 py-2 dark:bg-gray-800 dark:text-gray-100 outline-none"
             />
-            <InputField
-              label="Source"
-              icon={<Link2 size={16} />}
-              value={editForm.source}
-              onChange={(e) =>
-                setEditForm((f) => ({ ...f, source: e.target.value }))
-              }
-            />
-            <InputField
-              label="College"
-              icon={<GraduationCap size={16} />}
-              value={editForm.college}
-              onChange={(e) =>
-                setEditForm((f) => ({ ...f, college: e.target.value }))
-              }
-            />
-            <InputField
-  label="Year of Passout"
-  icon={<Calendar size={16} />}
-  value={editForm.yearOfPassout}
-  onChange={(e) => {
-    let year = e.target.value.replace(/\D/g, "");
-    if (year.length > 4) year = year.slice(0, 4);
-    setEditForm((f) => ({ ...f, yearOfPassout: year }));
-  }}
-/>
-            <div className="md:col-span-2 mt-4">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Comments
-              </label>
-              <div className="space-y-3 mt-2">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Write a comment..."
-                    className="flex-1 border rounded-lg px-3 py-2 dark:bg-gray-800 dark:text-gray-100 outline-none"
-                  />
-                  <button
-                    onClick={() => addComment.mutate({ text: newComment })}
-                    className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
-                  >
-                    Add Comment
-                  </button>
-                </div>
-                {/* Existing comments */}
-                <div className="mt-4 space-y-2 max-h-48 overflow-y-auto">
-                  {data.comments?.length > 0 ? (
-                    data.comments
-                      .slice()
-                      .reverse()
-                      .map((c, i) => (
-                        <div
-                          key={i}
-                          className="border border-gray-700 rounded-lg p-2 text-sm dark:text-gray-200"
-                        >
-                          <p>{c.text}</p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            — {c.by?.name || "Unknown"} (
-                            {new Date(c.at).toLocaleString()})
-                          </p>
-                        </div>
-                      ))
-                  ) : (
-                    <p className="text-gray-500 text-sm">No comments yet.</p>
-                  )}
-                </div>
-              </div>
-            </div>
+
+            <button
+              onClick={() => addComment.mutate({ text: newComment })}
+              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
+            >
+              Add Comment
+            </button>
           </div>
-        
-        
-      
-      <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <select
-          className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 px-4 py-2"
-          value={data?.status?.name}
-          onChange={handleChange}
-        >
-          {statuses?.map((s) => (
-            <option key={s._id} value={s.name}>
-              {s.name}
-            </option>
-          ))}
-        </select>
 
-        <div className="flex gap-3">
-          <button
-            className="rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-            onClick={() => navigate(-1)}
-          >
-            Cancel
-          </button>
-          <button
-            className="rounded-lg bg-purple-600 px-4 py-2 text-white shadow hover:bg-purple-700 transition"
-            onClick={() => {
-              // Clean phone before submitting
-              let cleanPhone = editForm.phone.replace(/\D/g, "");
-
-              if (cleanPhone.startsWith("91") && cleanPhone.length > 10) {
-                cleanPhone = cleanPhone.slice(cleanPhone.length - 10);
-              }
-
-              if (cleanPhone.length !== 10) {
-                alert("Please enter a valid 10-digit phone number.");
-                return;
-              }
-
-              updateLead.mutate(
-                { ...editForm, phone: cleanPhone },
-                {
-                  onSuccess: () => {
-                    qc.invalidateQueries({ queryKey: ["leads"] });
-                    navigate("/");
-                  },
-                }
-              );
-            }}
-          >
-            Save Changes
-          </button>
+          <div className="mt-4 space-y-2 max-h-48 overflow-y-auto">
+            {data.comments?.length > 0 ? (
+              data.comments
+                .slice()
+                .reverse()
+                .map((c, i) => (
+                  <div
+                    key={i}
+                    className="border border-gray-700 rounded-lg p-2 text-sm dark:text-gray-200"
+                  >
+                    <p>{c.text}</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      — {c.by?.name || "Unknown"} (
+                      {new Date(c.at).toLocaleString()})
+                    </p>
+                  </div>
+                ))
+            ) : (
+              <p className="text-gray-500 text-sm">No comments yet.</p>
+            )}
+          </div>
         </div>
       </div>
-        )}
+    </div>
+
+    {/* ACTION + STATUS SECTION */}
+    <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <select
+        className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 px-4 py-2"
+        value={data?.status?.name}
+        onChange={handleChange}
+      >
+        {statuses?.map((s) => (
+          <option key={s._id} value={s.name}>
+            {s.name}
+          </option>
+        ))}
+      </select>
+
+      <div className="flex gap-3">
+        <button
+          className="rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+          onClick={() => navigate(-1)}
+        >
+          Cancel
+        </button>
+
+        <button
+          className="rounded-lg bg-purple-600 px-4 py-2 text-white shadow hover:bg-purple-700 transition"
+          onClick={() => {
+            let cleanPhone = editForm.phone.replace(/\D/g, "");
+
+            if (cleanPhone.startsWith("91") && cleanPhone.length > 10) {
+              cleanPhone = cleanPhone.slice(cleanPhone.length - 10);
+            }
+
+            if (cleanPhone.length !== 10) {
+              alert("Please enter a valid 10-digit phone number.");
+              return;
+            }
+
+            updateLead.mutate(
+              { ...editForm, phone: cleanPhone },
+              {
+                onSuccess: () => {
+                  qc.invalidateQueries({ queryKey: ["leads"] });
+                  navigate("/");
+                },
+              }
+            );
+          }}
+        >
+          Save Changes
+        </button>
+      </div>
+    </div>
+  </>
+)}
         {/* History Tab */}
         {tab === "history" && (
           <div className="flow-root flex-col mt-6">
