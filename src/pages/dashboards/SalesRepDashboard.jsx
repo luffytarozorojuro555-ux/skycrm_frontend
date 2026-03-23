@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
@@ -20,6 +20,10 @@ export default function SalesRepDashboard() {
   const [endDate, setEndDate] = useState(null);
   const [showCustomDateRange, setShowCustomDateRange] = useState(false);
 
+const [showOptions, setShowOptions] = useState(false);
+const [customDates, setCustomDates] = useState({ start: "", end: "" });
+const dropdownRef = useRef(null);
+  
   const user = getUserFromToken();
 
   // Fetch only my leads (assigned to current user)
@@ -79,7 +83,11 @@ export default function SalesRepDashboard() {
   const filteredLeads = useMemo(() => {
     const allLeads = Array.isArray(myleads.data) ? myleads.data : [];
     return allLeads.filter((lead) => {
-      const leadDate = normalizeDate(lead.createdAt);
+      const getLeadDate = (lead) => {
+  return lead.updatedAt || lead.createdAt;
+};
+
+const leadDate = normalizeDate(getLeadDate(lead));
       if (!leadDate) return false;
 
       const now = new Date();
@@ -124,6 +132,36 @@ export default function SalesRepDashboard() {
       ? Math.round((newCount / totalFilteredLeads) * 100)
       : 0;
 
+const handleReportClick = (type) => {
+  const now = new Date();
+  let start, end;
+
+  if (type === "today") {
+    start = new Date(now.setHours(0, 0, 0, 0));
+    end = new Date();
+  } else if (type === "week") {
+    start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    end = new Date();
+  } else if (type === "15days") {
+    start = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000);
+    end = new Date();
+  } else if (type === "month") {
+    start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    end = new Date();
+  } else if (type === "3month") {
+    start = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+    end = new Date();
+  } else if (type === "custom") {
+    start = new Date(customDates.start);
+    end = new Date(customDates.end);
+  }
+
+  setStartDate(start);
+  setEndDate(end);
+  setTimeRange("Custom");
+  setShowOptions(false);
+};
+  
   const statItems = [
     {
       key: "total",
@@ -276,26 +314,66 @@ export default function SalesRepDashboard() {
                       </div>
 
                       {/* Time Range Buttons */}
-                      <div className="flex gap-2  dark:bg-gray-700 p-1 border border-gray-600 rounded-lg">
-                        {["Day", "Week", "Month", "Year", "Custom"].map((r) => (
-                          <button
-                            key={r}
-                            onClick={() => {
-                              setTimeRange(r);
-                              if (r === "Custom") setShowCustomDateRange(true);
-                            }}
-                            className={`px-3 py-1.5 text-sm  dark:bg-slate-700 rounded-md font-medium transition-all duration-200 ${
-                              timeRange === r
-                                ? "bg-indigo-500 text-white border border-indigo-500 shadow-md"
-                                : "dark:bg-gray-700 text-gray-700  dark:text-gray-200 border border-transparent hover:bg-gray-200"
-                            }`}
-                          >
-                            {r}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+                      <div className="relative" ref={dropdownRef}>
+  <button
+    onClick={() => setShowOptions((prev) => !prev)}
+    className="px-3 py-1.5 rounded-md bg-indigo-600 text-white"
+  >
+    Generate Report
+  </button>
+
+  {showOptions && (
+    <div className="absolute top-full right-0 bg-white border shadow-md p-2 z-50 w-48">
+      {[
+        ["today", "Today"],
+        ["week", "1 Week"],
+        ["15days", "15 Days"],
+        ["month", "1 Month"],
+        ["3month", "3 Months"],
+      ].map(([key, label]) => (
+        <div
+          key={key}
+          onClick={() => handleReportClick(key)}
+          className="cursor-pointer px-2 py-1 hover:bg-gray-100"
+        >
+          {label}
+        </div>
+      ))}
+
+      <div className="border-t mt-2 pt-2">
+        <input
+          type="date"
+          value={customDates.start}
+          onChange={(e) =>
+            setCustomDates((prev) => ({
+              ...prev,
+              start: e.target.value,
+            }))
+          }
+          className="w-full mb-1 border px-2 py-1"
+        />
+        <input
+          type="date"
+          value={customDates.end}
+          onChange={(e) =>
+            setCustomDates((prev) => ({
+              ...prev,
+              end: e.target.value,
+            }))
+          }
+          className="w-full mb-2 border px-2 py-1"
+        />
+
+        <button
+          onClick={() => handleReportClick("custom")}
+          className="w-full bg-green-600 text-white py-1"
+        >
+          Apply
+        </button>
+      </div>
+    </div>
+  )}
+</div>
 
                   {/* Stats Grid */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -338,7 +416,12 @@ export default function SalesRepDashboard() {
               <p className="text-gray-700 dark:text-gray-300 p-5">Loading...</p>
             ) : (
               <LeadTable
-                leads={displayedLeads}
+                leads={filteredLeads.filter((l) => {
+  if (!filter) return true;
+  const q = filter.toLowerCase();
+  const name = (l.name || l.title || "").toLowerCase();
+  return name.includes(q);
+})}
                 onOpen={onOpen}
                 onDelete={handleDelete}
                 statuses={Array.isArray(statuses.data) ? statuses.data : []}
