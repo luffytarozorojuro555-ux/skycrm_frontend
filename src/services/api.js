@@ -11,6 +11,25 @@ api.interceptors.request.use(cfg => {
   return cfg;
 })
 
+// api.interceptors.response.use(
+//   res => res,
+//   err => {
+//     const token = getToken();
+
+//     if (
+//       err?.response?.status === 401 &&
+//       token &&
+//       window.location.pathname !== '/login/select'
+//     ) {
+//       clearToken();
+//       window.location.href = '/login/select';
+//     }
+
+//     return Promise.reject(err);
+//   }
+// );
+let isRedirecting = false;
+
 api.interceptors.response.use(
   res => res,
   err => {
@@ -19,10 +38,17 @@ api.interceptors.response.use(
     if (
       err?.response?.status === 401 &&
       token &&
-      window.location.pathname !== '/login/select'
+      !isRedirecting
     ) {
+      isRedirecting = true;
+
+      console.warn("401 detected → logging out");
+
       clearToken();
-      window.location.href = '/login/select';
+
+      setTimeout(() => {
+        window.location.href = '/login/select';
+      }, 100);
     }
 
     return Promise.reject(err);
