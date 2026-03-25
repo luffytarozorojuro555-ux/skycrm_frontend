@@ -52,7 +52,11 @@ const dropdownRef = useRef(null);
       qc.invalidateQueries({ queryKey: ["leads", "assignedTo", "me"] });
     },
   });
-  const onOpen = (lead) => navigate(`/leads/${lead._id}`);
+  const onOpen = (lead, leadIds) => {
+  navigate(`/leads/${lead._id}`, {
+    state: { leadIds },
+  });
+};
   const handleDelete = () => {};
   const handleStatusChange = (id, statusName) => {
     statusMutation.mutate({ id, statusName });
