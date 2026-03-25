@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   User,
@@ -30,6 +31,10 @@ export default function LeadDetailPage() {
     queryKey: ["statuses"],
     queryFn: async () => (await api.get("/statuses")).data,
   });
+  const { data: leads } = useQuery({
+  queryKey: ["leads"],
+  queryFn: async () => (await api.get("/leads")).data,
+});
 
   const changeStatus = useMutation({
     mutationFn: async (payload) =>
@@ -89,7 +94,27 @@ export default function LeadDetailPage() {
   const [tab, setTab] = useState("details");
   const [loading, setLoading] = useState(false);
 
-  if (!data)
+  const location = useLocation();
+
+// If coming from list page → use passed IDs
+// Otherwise fallback to all leads
+const leadIds = location.state?.leadIds || leads?.map((l) => l._id);
+
+// Find current index
+const currentIndex = leadIds?.findIndex((lid) => lid === id);
+
+// Get next + prev
+const nextLeadId =
+  leadIds && currentIndex !== -1
+    ? leadIds[currentIndex + 1] || null
+    : null;
+
+const prevLeadId =
+  leadIds && currentIndex > 0
+    ? leadIds[currentIndex - 1]
+    : null;
+  
+  if (!data || !leadIds)
     return (
       <div className="flex items-center justify-center h-screen">
         <LoadingSpinner size={48} color="border-purple-500" />
@@ -284,41 +309,72 @@ export default function LeadDetailPage() {
         ))}
       </select>
 
-      <div className="flex gap-3">
-        <button
-          className="rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-          onClick={() => navigate(-1)}
-        >
-          Cancel
-        </button>
+      <div className="flex gap-3 flex-wrap">
+  {/* PREVIOUS BUTTON */}
+  {prevLeadId && (
+    <button
+      className="rounded-lg bg-gray-600 px-4 py-2 text-white hover:bg-gray-700 transition"
+      onClick={() =>
+        navigate(`/leads/${prevLeadId}`, {
+          state: { leadIds },
+        })
+      }
+    >
+      ← Prev
+    </button>
+  )}
 
-        <button
-          className="rounded-lg bg-purple-600 px-4 py-2 text-white shadow hover:bg-purple-700 transition"
-          onClick={() => {
-            let cleanPhone = editForm.phone.replace(/\D/g, "");
+  {/* CANCEL */}
+  <button
+    className="rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+    onClick={() => navigate(-1)}
+  >
+    Cancel
+  </button>
 
-            if (cleanPhone.startsWith("91") && cleanPhone.length > 10) {
-              cleanPhone = cleanPhone.slice(cleanPhone.length - 10);
-            }
+  {/* SAVE */}
+  <button
+    className="rounded-lg bg-purple-600 px-4 py-2 text-white shadow hover:bg-purple-700 transition"
+    onClick={() => {
+      let cleanPhone = editForm.phone.replace(/\D/g, "");
 
-            if (cleanPhone.length !== 10) {
-              alert("Please enter a valid 10-digit phone number.");
-              return;
-            }
+      if (cleanPhone.startsWith("91") && cleanPhone.length > 10) {
+        cleanPhone = cleanPhone.slice(cleanPhone.length - 10);
+      }
 
-            updateLead.mutate(
-              { ...editForm, phone: cleanPhone },
-              {
-                onSuccess: () => {
-                  qc.invalidateQueries({ queryKey: ["leads"] });
-                  navigate("/");
-                },
-              }
-            );
-          }}
-        >
-          Save Changes
-        </button>
+      if (cleanPhone.length !== 10) {
+        alert("Please enter a valid 10-digit phone number.");
+        return;
+      }
+
+      updateLead.mutate(
+        { ...editForm, phone: cleanPhone },
+        {
+          onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ["leads"] });
+            navigate("/");
+          },
+        }
+      );
+    }}
+  >
+    Save Changes
+  </button>
+
+  {/* NEXT BUTTON */}
+  {nextLeadId && (
+    <button
+      className="rounded-lg bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition"
+      onClick={() =>
+        navigate(`/leads/${nextLeadId}`, {
+          state: { leadIds },
+        })
+      }
+    >
+      Next →
+    </button>
+  )}
+</div>
       </div>
     </div>
   </>
