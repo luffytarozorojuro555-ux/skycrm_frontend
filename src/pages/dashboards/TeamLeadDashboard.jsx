@@ -61,14 +61,29 @@ export default function TeamLeadDashboard() {
   });
 
   // Fetch statuses for lead status filter dropdown and display
-  const statusesQuery = useQuery({
-    queryKey: ["statuses"],
-    queryFn: async () => {
-  const res = await api.get("/statuses");
-  return res.data.statuses || [];
-},
-  });
+//   const statusesQuery = useQuery({
+//     queryKey: ["statuses"],
+//     queryFn: async () => {
+//   const res = await api.get("/statuses");
+//   return res.data.statuses || [];
+// },
+//   });
 
+  const statusesQuery = useQuery({
+  queryKey: ["statuses"],
+  queryFn: async () => {
+    const res = await api.get("/statuses");
+
+    console.log("STATUS API:", res.data); // 🔥 ADD THIS
+
+    if (Array.isArray(res.data)) return res.data;
+    if (Array.isArray(res.data.statuses)) return res.data.statuses;
+    if (Array.isArray(res.data.data)) return res.data.data;
+
+    return [];
+  },
+});
+  
   // States for leads displayed and filtered
   //const [teamLeads, setTeamLeads] = useState([]);
   const teamLeads = useMemo(() => {
@@ -620,11 +635,11 @@ const tableLeads = useMemo(() => {
       }}
     >
       <option value="">All Statuses</option>
-      {(Array.isArray(statusesQuery.data) ? statusesQuery.data : []).map((s) => (
-        <option key={s.name} value={s.name}>
-          {s.name}
-        </option>
-      ))}
+      {(Array.isArray(statusesQuery.data) ? statusesQuery.data : []).map((s, i) => (
+  <option key={i} value={s.name || s.statusName}>
+    {s.name || s.statusName}
+  </option>
+))}
     </select>
 
     <button
