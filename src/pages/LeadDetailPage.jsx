@@ -27,11 +27,15 @@ export default function LeadDetailPage() {
     queryKey: ["lead", id],
     queryFn: async () => (await api.get(`/leads/${id}`)).data,
   });
-  const { data: statuses } = useQuery({
+  const { data: statuses = [] } = useQuery({
   queryKey: ["statuses"],
   queryFn: async () => {
     const res = await api.get("/statuses");
-    return res.data.statuses || [];
+
+    // 🔥 Handle both possible formats safely
+    return Array.isArray(res.data)
+      ? res.data
+      : res.data.statuses || [];
   },
 });
   const { data: leads } = useQuery({
@@ -134,7 +138,7 @@ const prevLeadId =
     const newStatus = e.target.value;
     setLoading(true);
     changeStatus.mutate(
-      { statusName: newStatus },
+      { status: newStatus },
       {
         onSettled: () => setTimeout(() => setLoading(false), 1000),
       }
@@ -307,16 +311,21 @@ const prevLeadId =
     {/* ACTION + STATUS SECTION */}
     <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
       <select
-        className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 px-4 py-2"
-        value={data?.status?.name}
-        onChange={handleChange}
-      >
-        {statuses?.map((s) => (
-          <option key={s._id} value={s.name}>
-            {s.name}
-          </option>
-        ))}
-      </select>
+  className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 px-4 py-2"
+  value={data?.status?.name || data?.status || ""}
+  onChange={handleChange}
+  disabled={!statuses.length}
+>
+  {!statuses.length ? (
+    <option>Loading statuses...</option>
+  ) : (
+    statuses.map((s) => (
+      <option key={s._id} value={s.name}>
+        {s.name}
+      </option>
+    ))
+  )}
+</select>
 
       <div className="flex gap-3 flex-wrap">
   {/* PREVIOUS BUTTON */}
@@ -360,7 +369,9 @@ const prevLeadId =
         { ...editForm, phone: cleanPhone },
         {
           onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ["leads"] });
+            qc.invalidateQueries({ queryKey: ["lead", id] });
+qc.invalidateQueries({ queryKey: ["leads"] });
+qc.invalidateQueries({ queryKey: ["leads", "assignedTo"] });
             if (nextLeadId) {
   navigate(`/leads/${nextLeadId}`, {
     state: { leadIds },
