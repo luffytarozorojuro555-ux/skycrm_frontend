@@ -376,7 +376,6 @@ const prevLeadId =
   )}
 </div>
       </div>
-    </div>
   </>
 )}
         {/* History Tab */}
