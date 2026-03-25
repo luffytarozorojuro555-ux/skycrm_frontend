@@ -101,8 +101,9 @@ export default function LeadDetailPage() {
 const leadIds = location.state?.leadIds || leads?.map((l) => l._id);
 
 // Find current index
-const currentIndex = leadIds?.findIndex((lid) => lid === id);
-
+const currentIndex = leadIds?.findIndex(
+  (lid) => String(lid) === String(id)
+);
 // Get next + prev
 const nextLeadId =
   leadIds && currentIndex !== -1
@@ -114,7 +115,7 @@ const prevLeadId =
     ? leadIds[currentIndex - 1]
     : null;
   
-  if (!data || !leadIds)
+  if (!data || !leads)
     return (
       <div className="flex items-center justify-center h-screen">
         <LoadingSpinner size={48} color="border-purple-500" />
@@ -352,7 +353,11 @@ const prevLeadId =
         {
           onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["leads"] });
-            navigate("/");
+            if (nextLeadId) {
+  navigate(`/leads/${nextLeadId}`, {
+    state: { leadIds },
+  });
+}
           },
         }
       );
