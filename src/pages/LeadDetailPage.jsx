@@ -42,7 +42,9 @@ export default function LeadDetailPage() {
   queryKey: ["leads"],
   queryFn: async () => {
     const res = await api.get("/leads");
-    return res.data.leads || [];
+    return Array.isArray(res.data)
+  ? res.data
+  : res.data.leads || [];
   },
 });
 
@@ -127,18 +129,18 @@ const prevLeadId =
     ? leadIds[currentIndex - 1]
     : null;
   
-  if (!data || !Array.isArray(leads))
+  if (!data)
     return (
       <div className="flex items-center justify-center h-screen">
         <LoadingSpinner size={48} color="border-purple-500" />
       </div>
     );
 
-  const handleChange = (e) => {
-    const newStatus = e.target.value;
+ const handleChange = (e) => {
+  const statusId = e.target.value;
     setLoading(true);
     changeStatus.mutate(
-      { status: newStatus },
+      { statusId },
       {
         onSettled: () => setTimeout(() => setLoading(false), 1000),
       }
@@ -157,7 +159,7 @@ const prevLeadId =
             Lead Information & History
           </p>
         </div>
-        <StatusBadge name={data.status?.name} />
+        <StatusBadge name={data.status?.name || data.status} />
       </div>
 
       
@@ -276,7 +278,7 @@ const prevLeadId =
             />
 
             <button
-              onClick={() => addComment.mutate({ text: newComment })}
+              onClick={() => addComment.mutate({ comment: newComment })}
               className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
             >
               Add Comment
@@ -312,7 +314,7 @@ const prevLeadId =
     <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
       <select
   className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 px-4 py-2"
-  value={data?.status?.name || data?.status || ""}
+  value={data?.status?._id || ""}
   onChange={handleChange}
   disabled={!statuses.length}
 >
@@ -320,7 +322,7 @@ const prevLeadId =
     <option>Loading statuses...</option>
   ) : (
     statuses.map((s) => (
-      <option key={s._id} value={s.name}>
+      <option key={s._id} value={s.id}>
         {s.name}
       </option>
     ))
@@ -406,7 +408,8 @@ qc.invalidateQueries({ queryKey: ["leads", "assignedTo"] });
         {tab === "history" && (
           <div className="flow-root flex-col mt-6">
             <ul role="list" className="-mb-5 space-y-2">
-              {data.history
+              {Array.isArray(data.history) &&
+ data.history
                 ?.slice()
                 .reverse()
                 .map((h, i, arr) => (
