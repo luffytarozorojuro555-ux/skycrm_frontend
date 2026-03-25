@@ -63,7 +63,10 @@ export default function TeamLeadDashboard() {
   // Fetch statuses for lead status filter dropdown and display
   const statusesQuery = useQuery({
     queryKey: ["statuses"],
-    queryFn: async () => (await api.get("/statuses")).data,
+    queryFn: async () => {
+  const res = await api.get("/statuses");
+  return res.data.statuses || [];
+},
   });
 
   // States for leads displayed and filtered
@@ -438,8 +441,8 @@ const tableLeads = useMemo(() => {
 
             <Card>
               <TeamMemberPerformance
-                leadsGroupedByMember={leadsGroupedByMember}
-                users={myTeamQuery?.data?.members || []}
+                leadsGroupedByMember={leadsGroupedByMember || {}}
+                users={Array.isArray(myTeamQuery?.data?.members) ? myTeamQuery.data.members : []}
               />
             </Card>
           </>
