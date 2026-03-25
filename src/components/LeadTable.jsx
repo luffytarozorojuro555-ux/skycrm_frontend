@@ -42,7 +42,9 @@ export default function LeadTable({ leads, onOpen, onDelete, hideAction, statuse
             <td>{lead?.assignedTo?.email??"Not assigned"}</td>
             {!hideAction && (
               <td>
-                <button className="text-blue-600 underline mr-2" onClick={() => onOpen(lead)}>Open</button>
+                <button className="text-blue-600 underline mr-2" onClick={() =>
+  onOpen(lead, sortedLeads.map((l) => l._id))
+}>Open</button>
                 <button className="text-red-600 underline" onClick={() => onDelete(lead._id)}>Delete</button>
               </td>
             )}
