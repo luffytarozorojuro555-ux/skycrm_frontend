@@ -138,18 +138,6 @@ export default function TeamLeadDashboard() {
   }, [teamLeads, filter, timeRange, startDate, endDate]);
 
 const tableLeads = useMemo(() => {
-  const safeLeads = Array.isArray(displayedLeads) ? displayedLeads : [];
-
-  const teamLeadId = myTeamQuery.data?.lead?._id;
-
-  if (dataScope === "mine") {
-    return safeLeads.filter(
-      (lead) => lead.assignedTo?._id === teamLeadId
-    );
-  }
-
-  return safeLeads;
-}, [displayedLeads, myTeamQuery.data, dataScope]);
   const teamLeadId = myTeamQuery.data?.lead?._id;
 
   if (dataScope === "mine") {
