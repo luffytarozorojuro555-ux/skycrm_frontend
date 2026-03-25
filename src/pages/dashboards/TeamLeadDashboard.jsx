@@ -35,7 +35,9 @@ export default function TeamLeadDashboard() {
       params: filter ? { status: filter } : {},
     });
 
-    return response.data.leads;  // 🔥 IMPORTANT FIX
+    return Array.isArray(response.data?.leads)
+  ? response.data.leads
+  : [];
   },
 });
 
@@ -47,7 +49,7 @@ export default function TeamLeadDashboard() {
         const isAdmin = user?.roleName === "Admin";
         const endpoint = "/team/my-team" + (isAdmin ? "?viewAll=true" : "");
         const response = await api.get(endpoint);
-        return response.data;
+        return response.data || {};
       } catch (error) {
         console.error("Error fetching team data:", error);
         throw new Error(
@@ -136,6 +138,18 @@ export default function TeamLeadDashboard() {
   }, [teamLeads, filter, timeRange, startDate, endDate]);
 
 const tableLeads = useMemo(() => {
+  const safeLeads = Array.isArray(displayedLeads) ? displayedLeads : [];
+
+  const teamLeadId = myTeamQuery.data?.lead?._id;
+
+  if (dataScope === "mine") {
+    return safeLeads.filter(
+      (lead) => lead.assignedTo?._id === teamLeadId
+    );
+  }
+
+  return safeLeads;
+}, [displayedLeads, myTeamQuery.data, dataScope]);
   const teamLeadId = myTeamQuery.data?.lead?._id;
 
   if (dataScope === "mine") {
@@ -577,7 +591,7 @@ const tableLeads = useMemo(() => {
                     )}
                     onOpen={onOpen}
                     onDelete={handleDelete}
-                    statuses={statusesQuery.data}
+                    statuses={Array.isArray(statusesQuery.data) ? statusesQuery.data : []}
                     onStatusChange={handleStatusChange}
                   />
                 )}
@@ -615,7 +629,7 @@ const tableLeads = useMemo(() => {
       }}
     >
       <option value="">All Statuses</option>
-      {statusesQuery.data?.map((s) => (
+      {(Array.isArray(statusesQuery.data) ? statusesQuery.data : []).map((s) => (
         <option key={s.name} value={s.name}>
           {s.name}
         </option>
@@ -695,7 +709,7 @@ const tableLeads = useMemo(() => {
                   <p>Loading...</p>
                 ) : (
                   <LeadTable
-                    leads={tableLeads}
+  leads={Array.isArray(tableLeads) ? tableLeads : []}
                     onOpen={onOpen}
                     onDelete={handleDelete}
                     statuses={statusesQuery.data}
