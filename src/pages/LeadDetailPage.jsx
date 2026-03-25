@@ -154,9 +154,9 @@ const prevLeadId =
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-            {data?.name.toUpperCase()}
-          </h1>
+         <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+  {data?.name ? data.name.toUpperCase() : "Loading..."}
+</h1>
           <p className="text-gray-600 dark:text-gray-300">
             Lead Information & History
           </p>
