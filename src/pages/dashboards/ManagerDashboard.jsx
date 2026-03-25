@@ -44,7 +44,7 @@ export default function ManagerDashboard() {
   const [teamToEdit, setTeamToEdit] = useState(null);
   const [importOpen, setImportOpen] = useState(false);
   const [importSource, setImportSource] = useState("");
-const [customSource, setCustomSource] = useState("");
+  const [customSource, setCustomSource] = useState("");
   const [importFile, setImportFile] = useState(null);
   const [importMsg, setImportMsg] = useState("");
   const [mapZoom, setMapZoom] = useState(1);
@@ -87,25 +87,24 @@ const [customSource, setCustomSource] = useState("");
   });
   const leadsQuery = useQuery({
     queryKey: ["leads", filter],
-      queryFn: async () => {
+    queryFn: async () => {
       const res = await api.get("/leads", {
         params: filter ? { status: filter } : {},
       });
 
       const currentUserId = res.data.curUser;
-    setCurUser(currentUserId);
+      setCurUser(currentUserId);
 
-    // ✅ Extract all leads first
-    let leads = res.data.leads || [];
+      // ✅ Extract all leads first
+      let leads = res.data.leads || [];
 
-    // ✅ Filter leads uploaded by current user only
-    if (currentUserId) {
-      leads = leads.filter(
-        (lead) => lead.uploadedBy?.toString() === currentUserId.toString()
-      );
-    }
-    return leads;
-
+      // ✅ Filter leads uploaded by current user only
+      if (currentUserId) {
+        leads = leads.filter(
+          (lead) => lead.uploadedBy?.toString() === currentUserId.toString(),
+        );
+      }
+      return leads;
     },
   });
   const statusesQuery = useQuery({
@@ -118,11 +117,11 @@ const [customSource, setCustomSource] = useState("");
     queryKey: ["leads", "unassigned"],
     queryFn: async () => {
       const response = await api.get("/leads");
-      let leads= response.data.leads || [];
+      let leads = response.data.leads || [];
       const currentUserId = response.data.curUser;
       setCurUser(currentUserId);
       let unassignedLeads = leads.filter(
-        (lead) => lead.uploadedBy?.toString() === currentUserId.toString()
+        (lead) => lead.uploadedBy?.toString() === currentUserId.toString(),
       );
       console.log("respose", unassignedLeads);
       return unassignedLeads.filter((lead) => !lead.assignedTo && !lead.teamId);
@@ -169,7 +168,7 @@ const [customSource, setCustomSource] = useState("");
       console.error("Error deleting lead:", error);
       alert(
         error?.response?.data?.error ||
-          "❌ Failed to delete lead. Please try again."
+          "❌ Failed to delete lead. Please try again.",
       );
     },
   });
@@ -293,10 +292,12 @@ const [customSource, setCustomSource] = useState("");
   // Geocode unique cities from leads using a lightweight, cached lookup via Nominatim (throttled)
   useEffect(() => {
     //const leads = Array.isArray(leadsQuery.data) ? leadsQuery.data : [];
-    const leads = Array.isArray(leadsQuery.data)? leadsQuery.data: leadsQuery.data?.leads || [];
+    const leads = Array.isArray(leadsQuery.data)
+      ? leadsQuery.data
+      : leadsQuery.data?.leads || [];
     const toKey = (s) => (s || "").toString().trim().toLowerCase();
     const uniqueCities = Array.from(
-      new Set(leads.map((l) => toKey(l.city)).filter(Boolean))
+      new Set(leads.map((l) => toKey(l.city)).filter(Boolean)),
     );
     const cacheKey = "geo_city_cache_v1";
     let cache = {};
@@ -313,7 +314,7 @@ const [customSource, setCustomSource] = useState("");
     const fetchOne = async (city) => {
       try {
         const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=1&q=${encodeURIComponent(
-          city
+          city,
         )}`;
         const res = await fetch(url, {
           headers: { Accept: "application/json" },
@@ -331,7 +332,7 @@ const [customSource, setCustomSource] = useState("");
             try {
               localStorage.setItem(
                 cacheKey,
-                JSON.stringify({ ...(cache || {}), ...next })
+                JSON.stringify({ ...(cache || {}), ...next }),
               );
             } catch {}
             return next;
@@ -356,7 +357,7 @@ const [customSource, setCustomSource] = useState("");
       ? unassignedLeadsQuery.data || []
       : leadsQuery.data || [],
     10, // initial load
-    10 // increment
+    10, // increment
   );
 
   const [showOptions, setShowOptions] = useState(false);
@@ -395,7 +396,7 @@ const [customSource, setCustomSource] = useState("");
       link.href = url;
       link.setAttribute(
         "download",
-        `Manager_Report_${type === "custom" ? "Custom" : type}.pdf`
+        `Manager_Report_${type === "custom" ? "Custom" : type}.pdf`,
       );
       document.body.appendChild(link);
       link.click();
@@ -419,28 +420,51 @@ const [customSource, setCustomSource] = useState("");
   //   );
   // }, [leadSearchTerm, visibleData]);
 
-const filteredLeadsData = useMemo(() => {
-  if (!Array.isArray(visibleData)) return [];
+  const filteredLeadsData = useMemo(() => {
+    if (!Array.isArray(visibleData)) return [];
 
-  if (leadSearchTerm.trim() === "") {
-    return visibleData.filter(Boolean); // removes undefined/null
-  }
+    if (leadSearchTerm.trim() === "") {
+      return visibleData.filter(Boolean); // removes undefined/null
+    }
 
-  const value = leadSearchTerm.toLowerCase();
+    const value = leadSearchTerm.toLowerCase();
 
-  return visibleData
-    .filter(Boolean)
-    .filter(
-      (lead) =>
-        lead?.name?.toLowerCase().includes(value) ||
-        lead?.email?.toLowerCase().includes(value)
-    );
-}, [leadSearchTerm, visibleData]);
-  
+    return visibleData
+      .filter(Boolean)
+      .filter(
+        (lead) =>
+          lead?.name?.toLowerCase().includes(value) ||
+          lead?.email?.toLowerCase().includes(value),
+      );
+  }, [leadSearchTerm, visibleData]);
+
   const handleLeadSearch = (e) => {
     setLeadSearchTerm(e.target.value.trim());
   };
 
+  const deleteAllLeadsMutation = useMutation({
+    mutationFn: async () => {
+      return await api.delete("/leads/deleteAllLeads"); 
+    },
+
+    onSuccess: () => {
+      alert("All users deleted successfully");
+      qc.invalidateQueries({ queryKey: ["leads"] });
+    },
+
+    onError: (error) => {
+      console.error("Delete failed:", error);
+    },
+  });
+
+  const handleDeleteAllLeads = async () => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete all leads?",
+    );
+    if (!confirmDelete) return;
+
+    deleteAllLeadsMutation.mutate();
+  };
   return (
     <div className="min-h-screen  dark:bg-gray-800 w-full p-6 overflow-x-hidden transition-colors duration-200">
       <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
@@ -502,7 +526,9 @@ const filteredLeadsData = useMemo(() => {
               {/* Compute analytics */}
               {(() => {
                 //const leads = leadsQuery.data || [];
-            const leads = Array.isArray(leadsQuery.data)? leadsQuery.data: leadsQuery.data?.leads || [];
+                const leads = Array.isArray(leadsQuery.data)
+                  ? leadsQuery.data
+                  : leadsQuery.data?.leads || [];
                 const palette = [
                   "#6366F1",
                   "#22C55E",
@@ -523,7 +549,7 @@ const filteredLeadsData = useMemo(() => {
                     return new Date(
                       now.getFullYear(),
                       now.getMonth(),
-                      now.getDate()
+                      now.getDate(),
                     );
                   if (timeRange === "Week")
                     return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -538,7 +564,7 @@ const filteredLeadsData = useMemo(() => {
                   return new Date(
                     date.getFullYear(),
                     date.getMonth(),
-                    date.getDate()
+                    date.getDate(),
                   );
                 };
                 const filteredLeads = leads.filter((l) => {
@@ -566,7 +592,7 @@ const filteredLeadsData = useMemo(() => {
                     (acc, l) =>
                       acc +
                       (normalize(l.status?.name || l.status) === "new" ? 1 : 0),
-                    0
+                    0,
                   );
                   return total > 0 ? Math.round((newCount / total) * 100) : 0;
                 })();
@@ -669,10 +695,10 @@ const filteredLeadsData = useMemo(() => {
                     const d = new Date(
                       now.getFullYear(),
                       now.getMonth() - i,
-                      1
+                      1,
                     );
                     const key = `${d.getFullYear()}-${String(
-                      d.getMonth() + 1
+                      d.getMonth() + 1,
                     ).padStart(2, "0")}`;
                     arr.push({
                       key,
@@ -698,7 +724,7 @@ const filteredLeadsData = useMemo(() => {
                   const created = l.createdAt ? new Date(l.createdAt) : null;
                   if (!created) return;
                   const key = `${created.getFullYear()}-${String(
-                    created.getMonth() + 1
+                    created.getMonth() + 1,
                   ).padStart(2, "0")}`;
                   if (!monthlyMap[key]) return; // outside window
                   const src = (l.source || "Unknown").trim() || "Unknown";
@@ -864,7 +890,7 @@ const filteredLeadsData = useMemo(() => {
                                 >
                                   {r}
                                 </button>
-                              )
+                              ),
                             )}
                           </div>
                           <div
@@ -1011,7 +1037,7 @@ const filteredLeadsData = useMemo(() => {
                           return acc;
                         }, {});
                         const entries = Object.values(srcMap).sort(
-                          (a, b) => b.total - a.total
+                          (a, b) => b.total - a.total,
                         );
                         const logoFor = (name) => {
                           const k = nn(name);
@@ -1038,7 +1064,7 @@ const filteredLeadsData = useMemo(() => {
                           };
                           if (logos[k]) return logos[k];
                           const hit = Object.keys(logos).find((key) =>
-                            k.includes(key)
+                            k.includes(key),
                           );
                           return hit ? logos[hit] : "";
                         };
@@ -1150,11 +1176,12 @@ const filteredLeadsData = useMemo(() => {
                             const totalLeads = team.leadsAssigned?.length || 0;
                             const successLeads =
                               team.leadsAssigned?.filter(
-                                (lead) => lead.status?.name === "enrolled"
+                                (lead) => lead.status?.name === "enrolled",
                               ).length || 0;
                             const failedLeads =
                               team.leadsAssigned?.filter(
-                                (lead) => lead.status?.name === "not interested"
+                                (lead) =>
+                                  lead.status?.name === "not interested",
                               ).length || 0;
                             const processingLeads =
                               totalLeads - (successLeads + failedLeads);
@@ -1174,7 +1201,7 @@ const filteredLeadsData = useMemo(() => {
                               const successRate =
                                 team.leads > 0
                                   ? Math.round(
-                                      (team.success / team.leads) * 100
+                                      (team.success / team.leads) * 100,
                                     )
                                   : 0;
                               const failureRate =
@@ -1184,7 +1211,7 @@ const filteredLeadsData = useMemo(() => {
                               const processingRate =
                                 team.leads > 0
                                   ? Math.round(
-                                      (team.processing / team.leads) * 100
+                                      (team.processing / team.leads) * 100,
                                     )
                                   : 0;
 
@@ -1428,7 +1455,9 @@ const filteredLeadsData = useMemo(() => {
 
                       {(() => {
                         //const leads = leadsQuery.data || [];
-                    const leads = Array.isArray(leadsQuery.data)? leadsQuery.data: leadsQuery.data?.leads || [];
+                        const leads = Array.isArray(leadsQuery.data)
+                          ? leadsQuery.data
+                          : leadsQuery.data?.leads || [];
                         const toKey = (s) =>
                           (s || "").toString().trim().toLowerCase();
                         const counts = leads.reduce((acc, l) => {
@@ -1459,7 +1488,7 @@ const filteredLeadsData = useMemo(() => {
                           .filter(Boolean);
                         const max = Object.values(counts).reduce(
                           (m, v) => Math.max(m, v),
-                          0
+                          0,
                         );
                         const colorFor = (geoName) => {
                           const v = counts[geoName] || 0;
@@ -1746,62 +1775,64 @@ const filteredLeadsData = useMemo(() => {
                     flexWrap: "wrap",
                   }}
                 >
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-  <div style={{ fontWeight: "bold" }}>Import CSV</div>
+                  <div
+                    style={{ display: "flex", flexDirection: "column", gap: 4 }}
+                  >
+                    <div style={{ fontWeight: "bold" }}>Import CSV</div>
 
-  <a
-    href="/sampledata.csv"
-    download
-    style={{
-      fontSize: 13,
-      color: "#4f46e5",
-      textDecoration: "underline",
-      cursor: "pointer",
-      width: "fit-content",
-    }}
-  >
-    ⬇ Download Sample CSV
-  </a>
+                    <a
+                      href="/sampledata.csv"
+                      download
+                      style={{
+                        fontSize: 13,
+                        color: "#4f46e5",
+                        textDecoration: "underline",
+                        cursor: "pointer",
+                        width: "fit-content",
+                      }}
+                    >
+                      ⬇ Download Sample CSV
+                    </a>
 
-  <div style={{ fontSize: 12, color: "#6b7280" }}>
-    Use this format to avoid upload errors
-  </div>
-</div>
+                    <div style={{ fontSize: 12, color: "#6b7280" }}>
+                      Use this format to avoid upload errors
+                    </div>
+                  </div>
                   <input
                     type="file"
                     accept=".csv"
                     onChange={(e) => setImportFile(e.target.files?.[0] || null)}
                   />
                   <select
-  value={importSource}
-  onChange={(e) => setImportSource(e.target.value)}
-  style={{
-    padding: 8,
-    border: "1px solid #ddd",
-    borderRadius: 6,
-  }}
->
-  <option value="">Select Source</option>
-  <option value="Facebook">Facebook</option>
-  <option value="WhatsApp">WhatsApp</option>
-  <option value="Instagram">Instagram</option>
-  <option value="Other">Other</option>
-</select>
+                    value={importSource}
+                    onChange={(e) => setImportSource(e.target.value)}
+                    style={{
+                      padding: 8,
+                      border: "1px solid #ddd",
+                      borderRadius: 6,
+                    }}
+                  >
+                    <option value="">Select Source</option>
+                    <option value="Facebook">Facebook</option>
+                    <option value="WhatsApp">WhatsApp</option>
+                    <option value="Instagram">Instagram</option>
+                    <option value="Other">Other</option>
+                  </select>
 
-{/* Show input only if "Other" */}
-{importSource === "Other" && (
-  <input
-    placeholder="Enter custom source"
-    value={customSource}
-    onChange={(e) => setCustomSource(e.target.value)}
-    style={{
-      padding: 8,
-      border: "1px solid #ddd",
-      borderRadius: 6,
-      marginTop: 8,
-    }}
-  />
-)}
+                  {/* Show input only if "Other" */}
+                  {importSource === "Other" && (
+                    <input
+                      placeholder="Enter custom source"
+                      value={customSource}
+                      onChange={(e) => setCustomSource(e.target.value)}
+                      style={{
+                        padding: 8,
+                        border: "1px solid #ddd",
+                        borderRadius: 6,
+                        marginTop: 8,
+                      }}
+                    />
+                  )}
                   <button
                     style={{
                       padding: "8px 14px",
@@ -1828,10 +1859,12 @@ const filteredLeadsData = useMemo(() => {
                         const { data } = await api.post(
                           "/leads/import/csv",
                           fd,
-                          { headers: { "Content-Type": "multipart/form-data" } }
+                          {
+                            headers: { "Content-Type": "multipart/form-data" },
+                          },
                         );
                         setImportMsg(
-                          `Imported: ${data.inserted}, Skipped: ${data.skipped}`
+                          `Imported: ${data.inserted}, Skipped: ${data.skipped}`,
                         );
                         if (
                           typeof data.inserted === "number" &&
@@ -1844,7 +1877,7 @@ const filteredLeadsData = useMemo(() => {
                         qc.invalidateQueries({ queryKey: ["leads"] });
                       } catch (e) {
                         setImportMsg(
-                          e.response?.data?.error || "Import failed"
+                          e.response?.data?.error || "Import failed",
                         );
                       }
                     }}
@@ -1957,24 +1990,32 @@ const filteredLeadsData = useMemo(() => {
               </form>
             </div>
             <div className="flex items-center justify-between mb-6">
-              <button
-                type="button"
-                onClick={() => setShowUnassignedLeads((prev) => !prev)}
-                aria-pressed={showUnassignedLeads}
-                className={`px-2.5 py-1.5 text-sm font-semibold rounded-md mx-2 my-2 transition-colors duration-150 focus:outline-none ${
-                  showUnassignedLeads
-                    ? "bg-white text-yellow-500 border border-yellow-400"
-                    : "bg-red-600 text-white border border-red-600"
-                }`}
-              >
-                {showUnassignedLeads
-                  ? "Show All Leads"
-                  : `Show Unassigned Leads ${
-                      unassignedLeadsQuery.data
-                        ? `(${unassignedLeadsQuery.data.length})`
-                        : ""
-                    }`}
-              </button>
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setShowUnassignedLeads((prev) => !prev)}
+                  aria-pressed={showUnassignedLeads}
+                  className={`px-2.5 py-1.5 text-sm font-semibold rounded-md mx-2 my-2 transition-colors duration-150 focus:outline-none ${
+                    showUnassignedLeads
+                      ? "bg-white text-yellow-500 border border-yellow-400"
+                      : "bg-red-600 text-white border border-red-600"
+                  }`}
+                >
+                  {showUnassignedLeads
+                    ? "Show All Leads"
+                    : `Show Unassigned Leads ${
+                        unassignedLeadsQuery.data
+                          ? `(${unassignedLeadsQuery.data.length})`
+                          : ""
+                      }`}
+                </button>
+                <button
+                  onClick={handleDeleteAllLeads}
+                  className="bg-blue-600 text-white border border-blue-600 px-4 py-1 rounded-md font-medium hover:bg-blue-700 hover:border-blue-700 transition duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-400"
+                >
+                  Delete All Leads
+                </button>
+              </div>
               <input
                 value={leadSearchTerm}
                 onChange={handleLeadSearch}
