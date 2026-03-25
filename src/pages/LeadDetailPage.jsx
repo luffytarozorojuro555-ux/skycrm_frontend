@@ -23,7 +23,7 @@ export default function LeadDetailPage() {
   const qc = useQueryClient();
 
   // Fetch lead data
-  const { data } = useQuery({
+  const { data={} } = useQuery({
     queryKey: ["lead", id],
     queryFn: async () => (await api.get(`/leads/${id}`)).data,
   });
@@ -137,15 +137,17 @@ const prevLeadId =
     );
 
  const handleChange = (e) => {
-  const statusId = e.target.value;
-    setLoading(true);
-    changeStatus.mutate(
-      { statusId },
-      {
-        onSettled: () => setTimeout(() => setLoading(false), 1000),
-      }
-    );
-  };
+  const statusName = e.target.value;
+
+  setLoading(true);
+
+  changeStatus.mutate(
+    { statusName },   // ✅ CORRECT (matches backend)
+    {
+      onSettled: () => setTimeout(() => setLoading(false), 1000),
+    }
+  );
+};
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -278,7 +280,7 @@ const prevLeadId =
             />
 
             <button
-              onClick={() => addComment.mutate({ comment: newComment })}
+              onClick={() => addComment.mutate({ text: newComment })}
               className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
             >
               Add Comment
@@ -314,7 +316,7 @@ const prevLeadId =
     <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
       <select
   className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 px-4 py-2"
-  value={data?.status?._id || ""}
+  value={data?.status?.name || ""}
   onChange={handleChange}
   disabled={!statuses.length}
 >
@@ -322,7 +324,7 @@ const prevLeadId =
     <option>Loading statuses...</option>
   ) : (
     statuses.map((s) => (
-      <option key={s._id} value={s.id}>
+      <option key={s._id} value={s.name}>
         {s.name}
       </option>
     ))
