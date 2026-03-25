@@ -28,12 +28,18 @@ export default function LeadDetailPage() {
     queryFn: async () => (await api.get(`/leads/${id}`)).data,
   });
   const { data: statuses } = useQuery({
-    queryKey: ["statuses"],
-    queryFn: async () => (await api.get("/statuses")).data,
-  });
+  queryKey: ["statuses"],
+  queryFn: async () => {
+    const res = await api.get("/statuses");
+    return res.data.statuses || [];
+  },
+});
   const { data: leads } = useQuery({
   queryKey: ["leads"],
-  queryFn: async () => (await api.get("/leads")).data,
+  queryFn: async () => {
+    const res = await api.get("/leads");
+    return res.data.leads || [];
+  },
 });
 
   const changeStatus = useMutation({
@@ -98,8 +104,10 @@ export default function LeadDetailPage() {
 
 // If coming from list page → use passed IDs
 // Otherwise fallback to all leads
-const leadIds = location.state?.leadIds || leads?.map((l) => l._id);
+const safeLeads = Array.isArray(leads) ? leads : [];
 
+const leadIds =
+  location.state?.leadIds || safeLeads.map((l) => l._id);
 // Find current index
 const currentIndex = leadIds?.findIndex(
   (lid) => String(lid) === String(id)
@@ -115,7 +123,7 @@ const prevLeadId =
     ? leadIds[currentIndex - 1]
     : null;
   
-  if (!data || !leads)
+  if (!data || !Array.isArray(leads))
     return (
       <div className="flex items-center justify-center h-screen">
         <LoadingSpinner size={48} color="border-purple-500" />
