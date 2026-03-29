@@ -60,19 +60,9 @@ export default function ChangePassword() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-white px-4">
-      <form onSubmit={handleSubmit} className="bg-white p-10 rounded-lg shadow-md w-full max-w-xl border">
-        <div className="flex items-start justify-between mb-6">
-          <h2 className="text-2xl font-bold">Change Password</h2>
-          <button
-            type="button"
-            onClick={handleClose}
-            aria-label="Close"
-            className="text-gray-500 hover:text-gray-800 p-2 rounded hover:bg-gray-100 transition"
-          >
-            <X size={20} />
-          </button>
-        </div>
+    <div className="flex justify-center items-center min-h-screen bg-white">
+      <form onSubmit={handleSubmit} className="bg-white p-8 rounded-lg shadow-md w-80 border">
+        <h2 className="text-2xl font-bold mb-6 text-center">Change Password</h2>
         <div className="mb-4 text-sm text-yellow-800 bg-yellow-100 p-3 rounded border border-yellow-300">
   ⚠️ Password must be at least 8 characters, contain 2 uppercase letters, 3 lowercase letters, 2 numbers, and 1 special character (!@#$&*) and no spaces
 </div>

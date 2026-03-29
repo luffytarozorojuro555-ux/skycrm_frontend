@@ -92,7 +92,7 @@ export default function AdminDashboard() {
     },
     {
       title: "Pending Leads",
-      value: (leads.data?.totalLeads - (leads.data?.statusCounts?.["Enrolled"] || 0)) || 0,
+      value: (leads.data?.totalLeads - ((leads.data?.statusCounts?.["Enrolled"] + leads.data?.statusCounts?.["Not Interested"])  || 0)) || 0,
       icon: <Clock className="w-6 h-6 text-red-600" />,
     },
   ];
