@@ -14,30 +14,30 @@ export default function LeadTable({
   );
 
   return (
-    <table className="w-full text-sm">
+    <table className="min-w-[1000px] text-sm border-separate border-spacing-x-5 table-auto">
       <thead>
         <tr className="text-left">
-          <th>Name</th>
-          <th>Email</th>
-          <th>Phone</th>
-          <th>City</th>
-          <th>Source</th>
-          <th>Status</th>
-          <th>Assigned to</th>
-          {!hideAction && <th>Action</th>}
+          <th className="px-2 py-1">Name</th>
+          <th className="px-2 py-1">Email</th>
+          <th className="px-2 py-1">Phone</th>
+          <th className="px-2 py-1">City</th>
+          <th className="px-2 py-1">Source</th>
+          <th className="px-2 py-1">Status</th>
+          <th className="px-2 py-1">Assigned to</th>
+          {!hideAction && <th className="px-2 py-1">Action</th>}
         </tr>
       </thead>
 
       <tbody>
         {sortedLeads.map((lead) => (
           <tr key={lead._id}>
-            <td>{lead.name}</td>
-            <td>{lead.email}</td>
-            <td>{lead.phone}</td>
-            <td>{lead.city || "-"}</td>
-            <td>{lead.source || "-"}</td>
+            <td className="px-2 py-1">{lead.name}</td>
+            <td className="px-2 py-1">{lead.email}</td>
+            <td className="px-2 py-1">{lead.phone}</td>
+            <td className="px-2 py-1">{lead.city || "-"}</td>
+            <td className="px-2 py-1">{lead.source || "-"}</td>
 
-            <td>
+            <td className="px-2 py-1">
               {safeStatuses.length > 0 ? (
                 <select
                   className="border rounded px-2 py-1"
@@ -59,10 +59,10 @@ export default function LeadTable({
               )}
             </td>
 
-            <td>{lead?.assignedTo?.email ?? "Not assigned"}</td>
+            <td className="px-2 py-1">{lead?.assignedTo?.email ?? "Not assigned"}</td>
 
             {!hideAction && (
-              <td>
+              <td className="whitespace-nowrap px-2 py-1">
                 <button
                   className="text-blue-600 underline mr-2"
                   onClick={() =>

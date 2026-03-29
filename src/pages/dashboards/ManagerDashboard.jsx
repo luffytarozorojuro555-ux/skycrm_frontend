@@ -10,7 +10,6 @@ import AddTeamLeadModal from "../../components/AddTeamLeadModal";
 import LeadTable from "../../components/LeadTable";
 import LeadTableWithSelection from "../../components/LeadTableWithSelection";
 import TeamSelectionModal from "../../components/TeamSelectionModal";
-import useLoadMore from "../../hooks/useLoadMore";
 import {
   ResponsiveContainer,
   PieChart,
@@ -85,28 +84,41 @@ export default function ManagerDashboard() {
     queryKey: ["teams"],
     queryFn: async () => (await api.get("/team")).data,
   });
+
+  const [limit, setLimit] = useState(10);
+  const [page, setPage] = useState(1);
+
   const leadsQuery = useQuery({
-    queryKey: ["leads", filter],
+    queryKey: ["leads", filter, limit, page],
     queryFn: async () => {
       const res = await api.get("/leads", {
-        params: filter ? { status: filter } : {},
+        params: {
+          status: filter || undefined,
+          limit,
+          page,
+        },
       });
 
-      const currentUserId = res.data.curUser;
-      setCurUser(currentUserId);
+      setCurUser(res.data.curUser);
 
-      // ✅ Extract all leads first
-      let leads = res.data.leads || [];
-
-      // ✅ Filter leads uploaded by current user only
-      if (currentUserId) {
-        leads = leads.filter(
-          (lead) => lead.uploadedBy?.toString() === currentUserId.toString(),
-        );
-      }
-      return leads;
+      return res.data;
     },
   });
+
+  const analyticsQuery = useQuery({
+    queryKey: ["analytics-leads", filter],
+    queryFn: async () => {
+      const res = await api.get("/leads", {
+        params: {
+          status: filter || undefined,
+          limit: 10000,
+          page: 1,
+        },
+      });
+      return res.data;
+    },
+  });
+
   const statusesQuery = useQuery({
     queryKey: ["statuses"],
     queryFn: async () => (await api.get("/statuses")).data,
@@ -116,22 +128,13 @@ export default function ManagerDashboard() {
   const unassignedLeadsQuery = useQuery({
     queryKey: ["leads", "unassigned"],
     queryFn: async () => {
-      const response = await api.get("/leads");
-      let leads = response.data.leads || [];
-      const currentUserId = response.data.curUser;
-      setCurUser(currentUserId);
-      let unassignedLeads = leads.filter(
-        (lead) => lead.uploadedBy?.toString() === currentUserId.toString(),
-      );
-      console.log("respose", unassignedLeads);
-      return unassignedLeads.filter((lead) => !lead.assignedTo && !lead.teamId);
+      const response = await api.get("/leads", {
+        params: { limit: 10000, page: 1, unassigned: true},
+      });
+
+      return response.data.leads;
     },
     enabled: showUnassignedLeads,
-  });
-  useEffect(() => {
-    if (showUnassignedLeads) {
-      unassignedLeadsQuery.refetch();
-    }
   });
   console.log("unassignedLeadsQuery", unassignedLeadsQuery);
 
@@ -214,11 +217,11 @@ export default function ManagerDashboard() {
   });
 
   // Lead assignment handlers
-  const handleUnassignedLefadsClick = () => {
-    setShowUnassignedLeads(!showUnassignedLeads);
-    if (showUnassignedLeads) {
-      setSelectedLeads([]);
-    }
+  const handleUnassignedLeadsClick = () => {
+    setShowUnassignedLeads((prev) => {
+      if (prev) setSelectedLeads([]);
+      return !prev;
+    });
   };
 
   const handleSelectAllLeads = (leadIds) => {
@@ -292,9 +295,7 @@ export default function ManagerDashboard() {
   // Geocode unique cities from leads using a lightweight, cached lookup via Nominatim (throttled)
   useEffect(() => {
     //const leads = Array.isArray(leadsQuery.data) ? leadsQuery.data : [];
-    const leads = Array.isArray(leadsQuery.data)
-      ? leadsQuery.data
-      : leadsQuery.data?.leads || [];
+    const leads = analyticsQuery.data?.leads || [];
     const toKey = (s) => (s || "").toString().trim().toLowerCase();
     const uniqueCities = Array.from(
       new Set(leads.map((l) => toKey(l.city)).filter(Boolean)),
@@ -351,14 +352,6 @@ export default function ManagerDashboard() {
       cancelled = true;
     };
   }, [leadsQuery.data]);
-
-  const { visibleData, hasMore, handleLoadMore } = useLoadMore(
-    showUnassignedLeads
-      ? unassignedLeadsQuery.data || []
-      : leadsQuery.data || [],
-    10, // initial load
-    10, // increment
-  );
 
   const [showOptions, setShowOptions] = useState(false);
   const [customDates, setCustomDates] = useState({ start: "", end: "" });
@@ -419,24 +412,20 @@ export default function ManagerDashboard() {
   //       lead.email?.toLowerCase().includes(value)
   //   );
   // }, [leadSearchTerm, visibleData]);
-
+  const leads = leadsQuery.data?.leads || [];
   const filteredLeadsData = useMemo(() => {
-    if (!Array.isArray(visibleData)) return [];
+    if (!Array.isArray(leads)) return [];
 
-    if (leadSearchTerm.trim() === "") {
-      return visibleData.filter(Boolean); // removes undefined/null
-    }
+    if (leadSearchTerm.trim() === "") return leads;
 
     const value = leadSearchTerm.toLowerCase();
 
-    return visibleData
-      .filter(Boolean)
-      .filter(
-        (lead) =>
-          lead?.name?.toLowerCase().includes(value) ||
-          lead?.email?.toLowerCase().includes(value),
-      );
-  }, [leadSearchTerm, visibleData]);
+    return leads.filter(
+      (lead) =>
+        lead?.name?.toLowerCase().includes(value) ||
+        lead?.email?.toLowerCase().includes(value),
+    );
+  }, [leadSearchTerm, leads]);
 
   const handleLeadSearch = (e) => {
     setLeadSearchTerm(e.target.value.trim());
@@ -444,7 +433,7 @@ export default function ManagerDashboard() {
 
   const deleteAllLeadsMutation = useMutation({
     mutationFn: async () => {
-      return await api.delete("/leads/deleteAllLeads"); 
+      return await api.delete("/leads/deleteAllLeads");
     },
 
     onSuccess: () => {
@@ -465,6 +454,7 @@ export default function ManagerDashboard() {
 
     deleteAllLeadsMutation.mutate();
   };
+
   return (
     <div className="min-h-screen  dark:bg-gray-800 w-full p-6 overflow-x-hidden transition-colors duration-200">
       <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
@@ -526,9 +516,7 @@ export default function ManagerDashboard() {
               {/* Compute analytics */}
               {(() => {
                 //const leads = leadsQuery.data || [];
-                const leads = Array.isArray(leadsQuery.data)
-                  ? leadsQuery.data
-                  : leadsQuery.data?.leads || [];
+                const leads = analyticsQuery.data?.leads || [];
                 const palette = [
                   "#6366F1",
                   "#22C55E",
@@ -1455,9 +1443,7 @@ export default function ManagerDashboard() {
 
                       {(() => {
                         //const leads = leadsQuery.data || [];
-                        const leads = Array.isArray(leadsQuery.data)
-                          ? leadsQuery.data
-                          : leadsQuery.data?.leads || [];
+                        const leads = analyticsQuery.data?.leads || [];
                         const toKey = (s) =>
                           (s || "").toString().trim().toLowerCase();
                         const counts = leads.reduce((acc, l) => {
@@ -1989,11 +1975,11 @@ export default function ManagerDashboard() {
                 </button>
               </form>
             </div>
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-12">
               <div>
                 <button
                   type="button"
-                  onClick={() => setShowUnassignedLeads((prev) => !prev)}
+                  onClick={handleUnassignedLeadsClick}
                   aria-pressed={showUnassignedLeads}
                   className={`px-2.5 py-1.5 text-sm font-semibold rounded-md mx-2 my-2 transition-colors duration-150 focus:outline-none ${
                     showUnassignedLeads
@@ -2016,13 +2002,30 @@ export default function ManagerDashboard() {
                   Delete All Leads
                 </button>
               </div>
-              <input
-                value={leadSearchTerm}
-                onChange={handleLeadSearch}
-                type="text"
-                placeholder="Search lead with name or email"
-                className="w-1/3 px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
+              <div className="flex items-center gap-3 flex-1 justify-end ml-4">
+                <input
+                  value={leadSearchTerm}
+                  onChange={handleLeadSearch}
+                  type="text"
+                  placeholder="Search lead with name or email"
+                  className="flex-1 min-w-[250px] max-w-[400px] px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <select
+                  value={limit}
+                  onChange={(e) => {
+                    setLimit(Number(e.target.value));
+                    setPage(1);
+                  }}
+                  className="px-2 py-2 border rounded-md"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                  <option value={1000}>1000</option>
+                  <option value={10000}>All</option>
+                </select>
+              </div>
             </div>
 
             {/* Lead Assignment Controls */}
@@ -2081,7 +2084,11 @@ export default function ManagerDashboard() {
                     <p>Loading unassigned leads...</p>
                   ) : (
                     <LeadTableWithSelection
-                      leads={filteredLeadsData}
+                      leads={
+                        showUnassignedLeads
+                          ? unassignedLeadsQuery.data || []
+                          : filteredLeadsData
+                      }
                       onOpen={onOpen}
                       onDelete={handleDelete}
                       statuses={statusesQuery.data}
@@ -2105,16 +2112,6 @@ export default function ManagerDashboard() {
                 )}
               </div>
             </div>
-            {hasMore && (
-              <div className="flex justify-center mt-4">
-                <button
-                  onClick={handleLoadMore}
-                  className="text-gary-400 font-medium "
-                >
-                  Load More
-                </button>
-              </div>
-            )}
           </Card>
         )}
         <AddTeamModal

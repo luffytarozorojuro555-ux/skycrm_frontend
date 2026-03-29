@@ -139,7 +139,7 @@ export default function Header({ sidebarOpen, setSidebarOpen }) {
                 icon={<Cog className="text-indigo-500" />}
                 sidebarOpen={sidebarOpen}
               />
-              <SidebarLink
+              {/* <SidebarLink
                 to="/manager"
                 label="Manager"
                 icon={<Briefcase className="text-green-500" />}
@@ -156,7 +156,7 @@ export default function Header({ sidebarOpen, setSidebarOpen }) {
                 label="Sales Rep"
                 icon={<Target className="text-blue-500" />}
                 sidebarOpen={sidebarOpen}
-              />
+              /> */}
             </>
           )}
           {user?.roleName === "Manager" && (

@@ -25,7 +25,7 @@ export default function AdminDashboard() {
     queryKey: ["leads"],
     queryFn: async () => {
       const res = await api.get("/leads");
-      return res.data.leads;
+      return res.data;
     },
   });
   const teams = useQuery({
@@ -56,7 +56,7 @@ export default function AdminDashboard() {
     queryFn: async () =>
       (
         await api.get(
-          `/leads/paginationLeadsList?page=${pageLead}&limit=${limitLead}`
+          `/leads?page=${pageLead}&limit=${limitLead}`
         )
       ).data,
     keepPreviousData: true,
@@ -82,7 +82,7 @@ export default function AdminDashboard() {
     },
     {
       title: "Total Leads",
-      value: leads.data?.length || 0,
+      value: leads.data?.totalLeads || 0,
       icon: <Target className="w-6 h-6 text-green-600" />,
     },
     {
@@ -92,7 +92,7 @@ export default function AdminDashboard() {
     },
     {
       title: "Pending Leads",
-      value: leads.data?.filter((l) => l.status?.name === "New").length || 0,
+      value: (leads.data?.totalLeads - (leads.data?.statusCounts?.["Enrolled"] || 0)) || 0,
       icon: <Clock className="w-6 h-6 text-red-600" />,
     },
   ];

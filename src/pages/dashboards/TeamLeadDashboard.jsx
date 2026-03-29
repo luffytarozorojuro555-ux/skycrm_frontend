@@ -17,29 +17,27 @@ export default function TeamLeadDashboard() {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [showCustomDateRange, setShowCustomDateRange] = useState(false);
-  const [dataScope, setDataScope] = useState("mine"); 
+  const [dataScope, setDataScope] = useState("mine");
 
-  // Fetch team data including leads assigned to the team and team members
-  // const leadsQuery = useQuery({
-  //   queryKey: ["leads", filter],
-  //   queryFn: async () =>
-  //     (await api.get("/leads", { params: filter ? { status: filter } : {} }))
-  //       .data,
-  // });
-  //console.log("leadsQuery", leadsQuery.data);
+  const [limit, setLimit] = useState(10);
+  const [page, setPage] = useState(1);
+  const [displayedLeads, setDisplayedLeads] = useState([]);
 
   const leadsQuery = useQuery({
-  queryKey: ["leads", filter],
-  queryFn: async () => {
-    const response = await api.get("/leads", {
-      params: filter ? { status: filter } : {},
-    });
+    queryKey: ["leads", filter, page, limit, dataScope],
+    queryFn: async () => {
+      const response = await api.get("/leads", {
+        params: {
+          status: filter,
+          limit,
+          page,
+          scope: dataScope,
+        },
+      });
 
-    return Array.isArray(response.data?.leads)
-  ? response.data.leads
-  : [];
-  },
-});
+      return Array.isArray(response.data?.leads) ? response.data.leads : [];
+    },
+  });
 
   const myTeamQuery = useQuery({
     queryKey: ["myTeam"],
@@ -49,96 +47,54 @@ export default function TeamLeadDashboard() {
         const isAdmin = user?.roleName === "Admin";
         const endpoint = "/team/my-team" + (isAdmin ? "?viewAll=true" : "");
         const response = await api.get(endpoint);
+        console.log("my team query:", response.data);
         return response.data || {};
       } catch (error) {
         console.error("Error fetching team data:", error);
         throw new Error(
-          error.response?.data?.message || "Failed to fetch team data"
+          error.response?.data?.message || "Failed to fetch team data",
         );
       }
     },
     retry: 1,
   });
 
-  // Fetch statuses for lead status filter dropdown and display
-//   const statusesQuery = useQuery({
-//     queryKey: ["statuses"],
-//     queryFn: async () => {
-//   const res = await api.get("/statuses");
-//   return res.data.statuses || [];
-// },
-//   });
+  console.log("LEADS:", leadsQuery.data);
 
   const statusesQuery = useQuery({
-  queryKey: ["statuses"],
-  queryFn: async () => {
-    const res = await api.get("/statuses");
+    queryKey: ["statuses"],
+    queryFn: async () => {
+      const res = await api.get("/statuses");
 
-    console.log("STATUS API:", res.data); // 🔥 ADD THIS
+      console.log("STATUS API:", res.data); // 🔥 ADD THIS
 
-    if (Array.isArray(res.data)) return res.data;
-    if (Array.isArray(res.data.statuses)) return res.data.statuses;
-    if (Array.isArray(res.data.data)) return res.data.data;
+      if (Array.isArray(res.data)) return res.data;
+      if (Array.isArray(res.data.statuses)) return res.data.statuses;
+      if (Array.isArray(res.data.data)) return res.data.data;
 
-    return [];
-  },
-});
-  
-  // States for leads displayed and filtered
-  //const [teamLeads, setTeamLeads] = useState([]);
-  const teamLeads = useMemo(() => {
-  const allLeads = Array.isArray(leadsQuery.data)
-    ? leadsQuery.data
-    : [];
+      return [];
+    },
+  });
 
-  if (!myTeamQuery.data?._id) return [];
-
-  return allLeads.filter(
-    (lead) => lead.teamId?._id === myTeamQuery.data._id
-  );
-}, [leadsQuery.data, myTeamQuery.data]);
-  const [displayedLeads, setDisplayedLeads] = useState([]);
-
-  // Synchronize teamLeads from myTeamQuery data whenever it changes
-  console.log("myTeamQuery", myTeamQuery.data);
-  // useEffect(() => {
-  //   if (leadsQuery.data && myTeamQuery.data?._id) {
-  //     // Filter leads belonging to this team only
-  //     const filteredLeads = leadsQuery.data.filter(
-  //       (lead) => lead.teamId?._id === myTeamQuery.data._id
-  //     );
-  //     setTeamLeads(filteredLeads);
-  //   } else {
-  //     setTeamLeads([]);
-  //   }
-  // }, [leadsQuery.data, myTeamQuery.data]);
-
-  //console.log("teamLeads", teamLeads);
-
-  //grouping leads by assignedTo member
+  const leads = Array.isArray(leadsQuery.data) ? leadsQuery.data : [];
   const leadsGroupedByMember = useMemo(() => {
-    if (!teamLeads || teamLeads.length === 0) return {};
+    if (!leads.length) return {};
 
-    return teamLeads.reduce((acc, lead) => {
+    return leads.reduce((acc, lead) => {
       const memberId = lead.assignedTo?._id || "unassigned";
       if (!acc[memberId]) acc[memberId] = [];
       acc[memberId].push(lead);
       return acc;
     }, {});
-  }, [teamLeads]);
+  }, [leads]);
 
   //console.log("Grouped Leads:", leadsGroupedByMember);
-  // Compute displayedLeads any time teamLeads, filter, or date range change
+  // Compute displayedLeads any time leads, filter, or date range change
   useEffect(() => {
-    // Filter by status if filter set
-    let filteredLeads = filter
-      ? teamLeads.filter((lead) => lead.status?.name === filter)
-      : [...teamLeads];
+    let filteredLeads = [...leads];
 
-    // If custom time range is selected, filter leads by date range
     if (timeRange === "Custom" && startDate && endDate) {
       const normalizeDate = (date) => {
-        if (!date) return null;
         const d = new Date(date);
         return new Date(d.getFullYear(), d.getMonth(), d.getDate());
       };
@@ -153,20 +109,9 @@ export default function TeamLeadDashboard() {
     }
 
     setDisplayedLeads(filteredLeads);
-  }, [teamLeads, filter, timeRange, startDate, endDate]);
+  }, [leads, timeRange, startDate, endDate]);
 
-const tableLeads = useMemo(() => {
-  const teamLeadId = myTeamQuery.data?.lead?._id;
-
-  if (dataScope === "mine") {
-    return displayedLeads.filter(
-      (lead) => lead.assignedTo?._id === teamLeadId
-    );
-  }
-
-  return displayedLeads;
-}, [displayedLeads, myTeamQuery.data, dataScope]);
-  
+  const tableLeads = displayedLeads;
   // Mutation for deleting a lead
   const deleteLead = useMutation({
     mutationFn: async (id) => await api.delete(`/leads/${id}`),
@@ -204,8 +149,9 @@ const tableLeads = useMemo(() => {
 
   // Derived statistics for team analytics and info display
   const totalMembers = myTeamQuery.data?.members?.length || 0;
-  const assignedLeadsCount = teamLeads.length;
-  const closedCount = teamLeads.filter((l) => {
+  const assignedLeadsCount = leads.length;
+
+  const closedCount = leads.filter((l) => {
     const name = l.status?.name || "";
     return ["Enrolled", "Closed", "Won", "Converted"].includes(name);
   }).length;
@@ -219,7 +165,7 @@ const tableLeads = useMemo(() => {
     return new Date(d.getFullYear(), d.getMonth(), d.getDate());
   };
 
-  const filteredTeamLeads = teamLeads.filter((lead) => {
+  const filteredleads = leads.filter((lead) => {
     const leadDate = normalizeDate(lead.createdAt);
     if (!leadDate) return false;
 
@@ -246,16 +192,14 @@ const tableLeads = useMemo(() => {
 
     return leadDate >= normalizedCutoff && leadDate <= normalizedEndDate;
   });
-  // console.log("Filtered Leads:", filteredTeamLeads);
-  const totalFilteredLeads = filteredTeamLeads.length;
-  const enrolledCount = filteredTeamLeads.filter(
-    (l) => l.status?.name === "Enrolled"
+  // console.log("Filtered Leads:", filteredleads);
+  const totalFilteredLeads = filteredleads.length;
+  const enrolledCount = filteredleads.filter(
+    (l) => l.status?.name === "Enrolled",
   ).length;
-  const newCount = filteredTeamLeads.filter(
-    (l) => l.status?.name === "New"
-  ).length;
-  const notInterestedCount = filteredTeamLeads.filter(
-    (l) => l.status?.name === "Not Interested"
+  const newCount = filteredleads.filter((l) => l.status?.name === "New").length;
+  const notInterestedCount = filteredleads.filter(
+    (l) => l.status?.name === "Not Interested",
   ).length;
   const processingCount =
     totalFilteredLeads - (enrolledCount + newCount + notInterestedCount);
@@ -440,7 +384,9 @@ const tableLeads = useMemo(() => {
                         key={s.key}
                         className="dark:bg-slate-700  bg-gray-300 border-slate-600 rounded-xl p-4 flex flex-col gap-2"
                       >
-                        <div className="text-sm dark:text-gray-200 text-gray-700">{s.label}</div>
+                        <div className="text-sm dark:text-gray-200 text-gray-700">
+                          {s.label}
+                        </div>
                         <div
                           className="font-bold text-2xl"
                           style={{ color: s.color }}
@@ -457,7 +403,11 @@ const tableLeads = useMemo(() => {
             <Card>
               <TeamMemberPerformance
                 leadsGroupedByMember={leadsGroupedByMember || {}}
-                users={Array.isArray(myTeamQuery?.data?.members) ? myTeamQuery.data.members : []}
+                users={
+                  Array.isArray(myTeamQuery?.data?.members)
+                    ? myTeamQuery.data.members
+                    : []
+                }
               />
             </Card>
           </>
@@ -475,7 +425,8 @@ const tableLeads = useMemo(() => {
               {myTeamQuery?.isError && (
                 <p className="text-red-600 dark:text-red-400">
                   Failed to load team data:{" "}
-                  {myTeamQuery?.error?.response?.data?.message || "Server Error"}
+                  {myTeamQuery?.error?.response?.data?.message ||
+                    "Server Error"}
                 </p>
               )}
 
@@ -539,7 +490,8 @@ const tableLeads = useMemo(() => {
 
                   <div className="mt-4">
                     <h4 className="text-md sm:text-lg font-bold text-gray-800 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-1 mb-3">
-                      Sales Representatives ({myTeamQuery?.data?.members?.length})
+                      Sales Representatives (
+                      {myTeamQuery?.data?.members?.length})
                     </h4>
                     <ul className="flex flex-col gap-3 ">
                       {myTeamQuery?.data?.members?.map((member) => (
@@ -592,12 +544,16 @@ const tableLeads = useMemo(() => {
                   <p>Loading...</p>
                 ) : (
                   <LeadTable
-                    leads={teamLeads.filter(
-                      (lead) => lead.status?.name === "Follow-Up"
+                    leads={leads.filter(
+                      (lead) => lead.status?.name === "Follow-Up",
                     )}
                     onOpen={onOpen}
                     onDelete={handleDelete}
-                    statuses={Array.isArray(statusesQuery.data) ? statusesQuery.data : []}
+                    statuses={
+                      Array.isArray(statusesQuery.data)
+                        ? statusesQuery.data
+                        : []
+                    }
                     onStatusChange={handleStatusChange}
                   />
                 )}
@@ -612,94 +568,113 @@ const tableLeads = useMemo(() => {
             style={{ marginLeft: 0, paddingLeft: 0 }}
           >
             <div
-  style={{
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
-    flexWrap: "wrap",
-    gap: 10,
-  }}
->
-  {/* LEFT SIDE */}
-  <div style={{ display: "flex", gap: 12 }}>
-    <select
-      onChange={(e) => setFilter(e.target.value)}
-      value={filter}
-      style={{
-        padding: 10,
-        borderRadius: 8,
-        border: "1px solid #ccc",
-        minWidth: 140,
-        fontSize: 15,
-      }}
-    >
-      <option value="">All Statuses</option>
-      {(Array.isArray(statusesQuery.data) ? statusesQuery.data : []).map((s, i) => (
-  <option key={i} value={s.name || s.statusName}>
-    {s.name || s.statusName}
-  </option>
-))}
-    </select>
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 20,
+                flexWrap: "wrap",
+                gap: 10,
+              }}
+            >
+              {/* LEFT SIDE */}
+              <div style={{ display: "flex", gap: 12 }}>
+                <select
+                  onChange={(e) => setFilter(e.target.value)}
+                  value={filter}
+                  style={{
+                    padding: 10,
+                    borderRadius: 8,
+                    border: "1px solid #ccc",
+                    minWidth: 140,
+                    fontSize: 15,
+                  }}
+                >
+                  <option value="">All Statuses</option>
+                  {(Array.isArray(statusesQuery.data)
+                    ? statusesQuery.data
+                    : []
+                  ).map((s, i) => (
+                    <option key={i} value={s.name || s.statusName}>
+                      {s.name || s.statusName}
+                    </option>
+                  ))}
+                </select>
 
-    <button
-      style={{
-        padding: "10px 18px",
-        background: "#10b981",
-        color: "white",
-        border: "none",
-        borderRadius: 8,
-        cursor: "pointer",
-        fontWeight: "bold",
-        fontSize: 15,
-      }}
-      onClick={() => {
-        qc.invalidateQueries({ queryKey: ["leads"] });
-        qc.invalidateQueries({ queryKey: ["myTeam"] });
-      }}
-    >
-      Refresh
-    </button>
-  </div>
+                <button
+                  style={{
+                    padding: "10px 18px",
+                    background: "#10b981",
+                    color: "white",
+                    border: "none",
+                    borderRadius: 8,
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                    fontSize: 15,
+                  }}
+                  onClick={() => {
+                    qc.invalidateQueries({ queryKey: ["leads"] });
+                    qc.invalidateQueries({ queryKey: ["myTeam"] });
+                  }}
+                >
+                  Refresh
+                </button>
+              </div>
 
-  {/* RIGHT SIDE FILTER 🔥 */}
-  <div
-    style={{
-      display: "flex",
-      border: "1px solid #ccc",
-      borderRadius: 8,
-      overflow: "hidden",
-    }}
-  >
-    <button
-      onClick={() => setDataScope("mine")}
-      style={{
-        padding: "8px 16px",
-        background: dataScope === "mine" ? "#2563eb" : "transparent",
-        color: dataScope === "mine" ? "#fff" : "#333",
-        border: "none",
-        cursor: "pointer",
-        fontWeight: "bold",
-      }}
-    >
-      My Data
-    </button>
+              {/* RIGHT SIDE FILTER 🔥 */}
+              <div
+                style={{
+                  display: "flex",
+                  border: "1px solid #ccc",
+                  borderRadius: 8,
+                  overflow: "hidden",
+                }}
+              >
+                <button
+                  onClick={() => setDataScope("mine")}
+                  style={{
+                    padding: "8px 16px",
+                    background:
+                      dataScope === "mine" ? "#2563eb" : "transparent",
+                    color: dataScope === "mine" ? "#fff" : "#333",
+                    border: "none",
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                  }}
+                >
+                  My Data
+                </button>
 
-    <button
-      onClick={() => setDataScope("team")}
-      style={{
-        padding: "8px 16px",
-        background: dataScope === "team" ? "#2563eb" : "transparent",
-        color: dataScope === "team" ? "#fff" : "#333",
-        border: "none",
-        cursor: "pointer",
-        fontWeight: "bold",
-      }}
-    >
-      All Data
-    </button>
-  </div>
-</div>
+                <button
+                  onClick={() => setDataScope("team")}
+                  style={{
+                    padding: "8px 16px",
+                    background:
+                      dataScope === "team" ? "#2563eb" : "transparent",
+                    color: dataScope === "team" ? "#fff" : "#333",
+                    border: "none",
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                  }}
+                >
+                  All Data
+                </button>
+                <select
+                  value={limit}
+                  onChange={(e) => {
+                    setLimit(Number(e.target.value));
+                    setPage(1);
+                  }}
+                  className="px-2 py-2 border rounded-md"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                  <option value={1000}>1000</option>
+                </select>
+              </div>
+            </div>
 
             <div style={{ width: "100%", overflowX: "auto" }}>
               <div
@@ -715,7 +690,7 @@ const tableLeads = useMemo(() => {
                   <p>Loading...</p>
                 ) : (
                   <LeadTable
-  leads={Array.isArray(tableLeads) ? tableLeads : []}
+                    leads={Array.isArray(tableLeads) ? tableLeads : []}
                     onOpen={onOpen}
                     onDelete={handleDelete}
                     statuses={statusesQuery.data}
