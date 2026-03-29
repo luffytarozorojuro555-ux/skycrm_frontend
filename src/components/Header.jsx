@@ -17,6 +17,7 @@ import {
   Sun,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import NotificationIcon from "./NotificationIcon";
 
 export default function Header({ sidebarOpen, setSidebarOpen }) {
   const nav = useNavigate();
@@ -188,16 +189,19 @@ export default function Header({ sidebarOpen, setSidebarOpen }) {
           ref={dropdownRef}
           className="fixed top-4 right-4 z-50 flex flex-col items-end"
         >
-          {/* Main Floating Button */}
-          <button
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="p-3 rounded-full bg-gray-400 shadow-lg text-gray-800 
+          <div className="flex items-center gap-x-6 mt-4">
+            <NotificationIcon />
+            {/* Main Floating Button */}
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="p-3 rounded-full bg-gray-400 shadow-lg text-gray-800 
                    hover:bg-gray-700 hover:text-white transition-all duration-200 
                    flex items-center justify-center"
-            aria-label="Open menu"
-          >
-            {dropdownOpen ? <X size={20} /> : <User size={20} />}
-          </button>
+              aria-label="Open menu"
+            >
+              {dropdownOpen ? <X size={20} /> : <User size={20} />}
+            </button>
+          </div>
 
           {/* Expanded Menu */}
           {dropdownOpen && (

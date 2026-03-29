@@ -7,6 +7,7 @@ import Card from "../../components/Card";
 import LeadTable from "../../components/LeadTable";
 import handleLogout from "../../logoutHandler";
 import CustomDateRange from "../../components/CustomDateRange";
+import NotificationIcon from "../../components/NotificationIcon";
 
 export default function TeamLeadDashboard() {
   const qc = useQueryClient();
@@ -263,7 +264,6 @@ export default function TeamLeadDashboard() {
           { tab: "team", label: "Team Members", color: "#10b981" },
           { tab: "data", label: "Data Table", color: "#f59e0b" },
           { tab: "follow-up", label: "Follow Up List", color: "#4709abff" },
-          { tab: "logout", label: "Logout", color: "#dc2626" },
         ].map((btn) => (
           <button
             key={btn.tab}
