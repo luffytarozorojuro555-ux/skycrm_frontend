@@ -468,7 +468,7 @@ export default function ManagerDashboard() {
           { tab: "home", label: "Home", color: "#2563eb" },
           { tab: "teams", label: "Teams", color: "#10b981" },
           { tab: "data", label: "Data Table", color: "#f59e0b" },
-          { tab: "logout", label: "Logout", color: "#dc2626" },
+          // { tab: "logout", label: "Logout", color: "#dc2626" },
         ].map((btn) => (
           <button
             key={btn.tab}
