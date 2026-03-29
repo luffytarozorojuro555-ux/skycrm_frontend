@@ -222,11 +222,11 @@ const handleReportClick = (type) => {
             label: "Data",
             color: "text-yellow-500 dark:text-yellow-400",
           },
-          {
-            tab: "logout",
-            label: "Logout",
-            color: "text-red-600 dark:text-red-400",
-          },
+          // {
+          //   tab: "logout",
+          //   label: "Logout",
+          //   color: "text-red-600 dark:text-red-400",
+          // },
         ].map((btn) => (
           <button
             key={btn.tab}
