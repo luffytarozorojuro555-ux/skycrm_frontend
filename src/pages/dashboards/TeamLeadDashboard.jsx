@@ -40,6 +40,20 @@ export default function TeamLeadDashboard() {
     },
   });
 
+  const teamLeadsQuery = useQuery({
+    queryKey: ["team-leads", timeRange, startDate, endDate],
+    queryFn: async () => {
+      const response = await api.get("/leads", {
+        params: {
+          scope: "team", 
+          limit: 1000, 
+        },
+      });
+
+      return Array.isArray(response.data?.leads) ? response.data.leads : [];
+    },
+  });
+
   const myTeamQuery = useQuery({
     queryKey: ["myTeam"],
     queryFn: async () => {
@@ -166,7 +180,11 @@ export default function TeamLeadDashboard() {
     return new Date(d.getFullYear(), d.getMonth(), d.getDate());
   };
 
-  const filteredleads = leads.filter((lead) => {
+  const totalLeads = Array.isArray(teamLeadsQuery.data)
+  ? teamLeadsQuery.data
+  : [];
+
+  const filteredleads = totalLeads.filter((lead) => {
     const leadDate = normalizeDate(lead.createdAt);
     if (!leadDate) return false;
 
