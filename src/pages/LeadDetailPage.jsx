@@ -336,7 +336,7 @@ export default function LeadDetailPage() {
                 {/* CANCEL */}
                 <button
                   className="rounded-lg border border-red-300 dark:border-red-600 px-4 py-2 text-red-700 dark:text-red-200 hover:bg-red-100 dark:hover:bg-red-700 transition"
-                  onClick={() => navigate("/admin")}
+                  onClick={() => navigate("/")}
                 >
                   Close
                 </button>
