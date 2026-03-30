@@ -14,11 +14,18 @@ export default function TeamLeadDashboard() {
   const nav = useNavigate();
   const [activeTab, setActiveTab] = useState("home");
   const [filter, setFilter] = useState("");
+  const [searchFilter, setSearchFilter] = useState("");
   const [timeRange, setTimeRange] = useState("Week");
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [showCustomDateRange, setShowCustomDateRange] = useState(false);
   const [dataScope, setDataScope] = useState("mine");
+  
+  // Advanced date filtering for table
+  const [tableDateFilter, setTableDateFilter] = useState("all");
+  const [tableDateField, setTableDateField] = useState("assignedDate");
+  const [tableDateCustomStart, setTableDateCustomStart] = useState("");
+  const [tableDateCustomEnd, setTableDateCustomEnd] = useState("");
 
   const [limit, setLimit] = useState(10);
   const [page, setPage] = useState(1);
@@ -91,6 +98,77 @@ export default function TeamLeadDashboard() {
     },
   });
 
+  // Helper: Normalize dates for comparison (midnight UTC)
+  const normalizeDate = (date) => {
+    if (!date) return null;
+    const d = new Date(date);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  };
+
+  // Helper: Get assigned date from lead
+  // Assigned date = first history entry (when lead first assigned) or createdAt
+  const getAssignedDate = (lead) => {
+    if (lead.history && lead.history.length > 0) {
+      return lead.history[0].at;
+    }
+    return lead.createdAt;
+  };
+
+  // Helper: Get modified date from lead
+  // Modified date = last history entry (most recent status change) or updatedAt
+  const getModifiedDate = (lead) => {
+    if (lead.history && lead.history.length > 0) {
+      return lead.history[lead.history.length - 1].at;
+    }
+    return lead.updatedAt || lead.createdAt;
+  };
+
+  // Helper: Get date field from lead based on filter selection
+  const getLeadDateField = (lead) => {
+    if (tableDateField === "assignedDate") {
+      return getAssignedDate(lead);
+    } else if (tableDateField === "statusUpdatedDate") {
+      return getModifiedDate(lead);
+    }
+    return lead.createdAt;
+  };
+
+  // Helper: Apply date filter for table
+  const applyDateFilter = (lead) => {
+    if (tableDateFilter === "all") return true;
+    
+    const leadDate = normalizeDate(getLeadDateField(lead));
+    if (!leadDate) return false;
+    
+    const now = new Date();
+    const normalizedNow = normalizeDate(now);
+    
+    switch (tableDateFilter) {
+      case "today":
+        return leadDate.getTime() === normalizedNow.getTime();
+      case "week":
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const normalizedWeekAgo = normalizeDate(weekAgo);
+        return leadDate >= normalizedWeekAgo && leadDate <= normalizedNow;
+      case "month":
+        return leadDate.getMonth() === normalizedNow.getMonth() &&
+               leadDate.getFullYear() === normalizedNow.getFullYear();
+      case "year":
+        return leadDate.getFullYear() === normalizedNow.getFullYear();
+      case "custom":
+        if (!tableDateCustomStart) return false;
+        const customDate = normalizeDate(tableDateCustomStart);
+        return leadDate.getTime() === customDate.getTime();
+      case "between":
+        if (!tableDateCustomStart || !tableDateCustomEnd) return false;
+        const startD = normalizeDate(tableDateCustomStart);
+        const endD = normalizeDate(tableDateCustomEnd);
+        return leadDate >= startD && leadDate <= endD;
+      default:
+        return true;
+    }
+  };
+
   const leads = Array.isArray(leadsQuery.data) ? leadsQuery.data : [];
   const leadsGroupedByMember = useMemo(() => {
     if (!leads.length) return {};
@@ -104,27 +182,26 @@ export default function TeamLeadDashboard() {
   }, [leads]);
 
   //console.log("Grouped Leads:", leadsGroupedByMember);
-  // Compute displayedLeads any time leads, filter, or date range change
+  // Compute displayedLeads with date filtering and search for table view
   useEffect(() => {
     let filteredLeads = [...leads];
-
-    if (timeRange === "Custom" && startDate && endDate) {
-      const normalizeDate = (date) => {
-        const d = new Date(date);
-        return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-      };
-
-      const start = normalizeDate(startDate);
-      const end = normalizeDate(endDate);
-
-      filteredLeads = filteredLeads.filter((lead) => {
-        const leadDate = normalizeDate(lead.createdAt);
-        return leadDate >= start && leadDate <= end;
+    
+    // Apply date filter
+    filteredLeads = filteredLeads.filter(applyDateFilter);
+    
+    // Apply search filter
+    if (searchFilter) {
+      const q = searchFilter.toLowerCase();
+      filteredLeads = filteredLeads.filter((l) => {
+        const name = (l.name || l.title || "").toString().toLowerCase();
+        const phone = (l.phone || "").toString().toLowerCase();
+        const email = (l.email || "").toString().toLowerCase();
+        return name.includes(q) || phone.includes(q) || email.includes(q);
       });
     }
-
+    
     setDisplayedLeads(filteredLeads);
-  }, [leads, timeRange, startDate, endDate]);
+  }, [leads, tableDateFilter, tableDateField, tableDateCustomStart, tableDateCustomEnd, searchFilter]);
 
   const tableLeads = displayedLeads;
   // Mutation for deleting a lead
@@ -173,12 +250,6 @@ export default function TeamLeadDashboard() {
   const performancePercent = assignedLeadsCount
     ? Math.round((closedCount / assignedLeadsCount) * 100)
     : 0;
-
-  const normalizeDate = (date) => {
-    if (!date) return null;
-    const d = new Date(date);
-    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  };
 
   const totalLeads = Array.isArray(teamLeadsQuery.data)
   ? teamLeadsQuery.data
@@ -573,6 +644,7 @@ export default function TeamLeadDashboard() {
                         : []
                     }
                     onStatusChange={handleStatusChange}
+                    showDelete={false}
                   />
                 )}
               </div>
@@ -585,98 +657,235 @@ export default function TeamLeadDashboard() {
             title="My Team's Leads"
             style={{ marginLeft: 0, paddingLeft: 0 }}
           >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 20,
-                flexWrap: "wrap",
-                gap: 10,
-              }}
-            >
-              {/* LEFT SIDE */}
-              <div style={{ display: "flex", gap: 12 }}>
-                <select
-                  onChange={(e) => setFilter(e.target.value)}
-                  value={filter}
-                  style={{
-                    padding: 10,
-                    borderRadius: 8,
-                    border: "1px solid #ccc",
-                    minWidth: 140,
-                    fontSize: 15,
-                  }}
-                >
-                  <option value="">All Statuses</option>
-                  {(Array.isArray(statusesQuery.data)
-                    ? statusesQuery.data
-                    : []
-                  ).map((s, i) => (
-                    <option key={i} value={s.name || s.statusName}>
-                      {s.name || s.statusName}
-                    </option>
-                  ))}
-                </select>
+            {/* Filters Section */}
+            <div style={{ marginBottom: 24, padding: "0 20px" }}>
+              {/* Row 1: Status & Date Field Filters */}
+              <div style={{ display: "flex", gap: 16, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
+                {/* Status Filter */}
+                <div>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: "#666" }}>
+                    Filter by Status
+                  </label>
+                  <select
+                    onChange={(e) => setFilter(e.target.value)}
+                    value={filter}
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: 8,
+                      border: "2px solid #ddd",
+                      minWidth: 150,
+                      fontSize: 14,
+                      fontWeight: 500,
+                      backgroundColor: filter ? "#eef2ff" : "#fff",
+                      borderColor: filter ? "#6366f1" : "#ddd",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <option value="">All Statuses</option>
+                    {(Array.isArray(statusesQuery.data)
+                      ? statusesQuery.data
+                      : []
+                    ).map((s, i) => (
+                      <option key={i} value={s.name || s.statusName}>
+                        {s.name || s.statusName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-                <button
-                  style={{
-                    padding: "10px 18px",
-                    background: "#10b981",
-                    color: "white",
-                    border: "none",
-                    borderRadius: 8,
-                    cursor: "pointer",
-                    fontWeight: "bold",
-                    fontSize: 15,
-                  }}
-                  onClick={() => {
-                    qc.invalidateQueries({ queryKey: ["leads"] });
-                    qc.invalidateQueries({ queryKey: ["myTeam"] });
-                  }}
-                >
-                  Refresh
-                </button>
+                {/* Date Field Type Selector */}
+                <div>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: "#666" }}>
+                    Filter by Which Date?
+                  </label>
+                  <select
+                    onChange={(e) => setTableDateField(e.target.value)}
+                    value={tableDateField}
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: 8,
+                      border: "2px solid #ddd",
+                      minWidth: 180,
+                      fontSize: 14,
+                      fontWeight: 500,
+                      backgroundColor: "#f0f9ff",
+                      borderColor: "#0284c7",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <option value="assignedDate">Assigned Date (First Assigned)</option>
+                    <option value="statusUpdatedDate">Status Modified Date (Latest Change)</option>
+                  </select>
+                </div>
               </div>
 
-              {/* RIGHT SIDE FILTER 🔥 */}
-              <div
-                style={{
-                  display: "flex",
-                  border: "1px solid #ccc",
-                  borderRadius: 8,
-                  overflow: "hidden",
-                }}
-              >
-                <button
-                  onClick={() => setDataScope("mine")}
-                  style={{
-                    padding: "8px 16px",
-                    background:
-                      dataScope === "mine" ? "#2563eb" : "transparent",
-                    color: dataScope === "mine" ? "#fff" : "#333",
-                    border: "none",
-                    cursor: "pointer",
-                    fontWeight: "bold",
-                  }}
-                >
-                  My Data
-                </button>
+              {/* Row 2: Date Range Filters & Custom Inputs */}
+              <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
+                {/* Date Range Buttons */}
+                <div>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: "#666" }}>
+                    Date Range
+                  </label>
+                  <div style={{ display: "flex", gap: 6, background: "#f9fafb", padding: 6, borderRadius: 8, border: "1px solid #e5e7eb" }}>
+                    {[
+                      { value: "all", label: "All" },
+                      { value: "today", label: "Today" },
+                      { value: "week", label: "Week" },
+                      { value: "month", label: "Month" },
+                      { value: "year", label: "Year" },
+                      { value: "custom", label: "Custom" },
+                      { value: "between", label: "Range" }
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => setTableDateFilter(opt.value)}
+                        title={opt.value === "custom" ? "Pick a specific date" : opt.value === "between" ? "Pick a date range" : `Filter by ${opt.label}`}
+                        style={{
+                          padding: "6px 12px",
+                          border: tableDateFilter === opt.value ? "2px solid #6366f1" : "1px solid #d1d5db",
+                          background: tableDateFilter === opt.value ? "#6366f1" : "#ffffff",
+                          color: tableDateFilter === opt.value ? "#ffffff" : "#374151",
+                          borderRadius: 6,
+                          cursor: "pointer",
+                          fontSize: 13,
+                          fontWeight: tableDateFilter === opt.value ? "600" : "500",
+                          transition: "all 0.2s",
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-                <button
-                  onClick={() => setDataScope("team")}
+                {/* Custom Date Inputs */}
+                {(tableDateFilter === "custom" || tableDateFilter === "between") && (
+                  <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
+                    <div>
+                      <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: "#666" }}>
+                        {tableDateFilter === "between" ? "Start Date" : "Date"}
+                      </label>
+                      <input
+                        type="date"
+                        value={tableDateCustomStart}
+                        onChange={(e) => setTableDateCustomStart(e.target.value)}
+                        max={tableDateCustomEnd}
+                        style={{
+                          padding: "8px 12px",
+                          borderRadius: 8,
+                          border: "2px solid #ddd",
+                          fontSize: 14,
+                          borderColor: tableDateCustomStart ? "#10b981" : "#ddd",
+                        }}
+                      />
+                    </div>
+                    {tableDateFilter === "between" && (
+                      <div>
+                        <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: "#666" }}>
+                          End Date
+                        </label>
+                        <input
+                          type="date"
+                          value={tableDateCustomEnd}
+                          onChange={(e) => setTableDateCustomEnd(e.target.value)}
+                          min={tableDateCustomStart}
+                          style={{
+                            padding: "8px 12px",
+                            borderRadius: 8,
+                            border: "2px solid #ddd",
+                            fontSize: 14,
+                            borderColor: tableDateCustomEnd ? "#10b981" : "#ddd",
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Search Input */}
+                <div style={{ display: "flex", alignItems: "flex-end", flex: 1, minWidth: 200 }}>
+                  <div style={{ width: "100%" }}>
+                    <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: "#666" }}>
+                      Search
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Search by name, phone, email..."
+                      value={searchFilter}
+                      onChange={(e) => setSearchFilter(e.target.value)}
+                      style={{
+                        padding: "8px 12px",
+                        borderRadius: 8,
+                        border: "2px solid #ddd",
+                        width: "100%",
+                        fontSize: 14,
+                        borderColor: searchFilter ? "#3b82f6" : "#ddd",
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Active Filters Summary */}
+              {(filter || tableDateFilter !== "all" || searchFilter) && (
+                <div style={{ marginTop: 12, padding: 10, backgroundColor: "#f0f9ff", borderLeft: "4px solid #0284c7", borderRadius: 4 }}>
+                  <span style={{ fontSize: 13, color: "#0369a1" }}>
+                    <strong>Active filters:</strong>{" "}
+                    {filter && <span className="badge">Status: {filter}</span>}
+                    {" "}
+                    {tableDateFilter !== "all" && <span className="badge">Date: {tableDateFilter}</span>}
+                    {" "}
+                    {searchFilter && <span className="badge">Search: "{searchFilter}"</span>}
+                  </span>
+                </div>
+              )}
+
+              {/* Data Scope Toggle (My Data / All Data) */}
+              <div style={{ marginTop: 12, display: "flex", gap: 12, alignItems: "center" }}>
+                <label style={{ fontSize: 12, fontWeight: 600, color: "#666" }}>
+                  View:
+                </label>
+                <div
                   style={{
-                    padding: "8px 16px",
-                    background:
-                      dataScope === "team" ? "#2563eb" : "transparent",
-                    color: dataScope === "team" ? "#fff" : "#333",
-                    border: "none",
-                    cursor: "pointer",
-                    fontWeight: "bold",
+                    display: "flex",
+                    border: "2px solid #ddd",
+                    borderRadius: 8,
+                    overflow: "hidden",
                   }}
                 >
-                  All Data
-                </button>
+                  <button
+                    onClick={() => setDataScope("mine")}
+                    style={{
+                      padding: "6px 16px",
+                      background:
+                        dataScope === "mine" ? "#2563eb" : "transparent",
+                      color: dataScope === "mine" ? "#fff" : "#333",
+                      border: "none",
+                      cursor: "pointer",
+                      fontWeight: dataScope === "mine" ? "600" : "500",
+                      fontSize: 14,
+                    }}
+                  >
+                    My Leads
+                  </button>
+
+                  <button
+                    onClick={() => setDataScope("team")}
+                    style={{
+                      padding: "6px 16px",
+                      background:
+                        dataScope === "team" ? "#2563eb" : "transparent",
+                      color: dataScope === "team" ? "#fff" : "#333",
+                      border: "none",
+                      cursor: "pointer",
+                      fontWeight: dataScope === "team" ? "600" : "500",
+                      fontSize: 14,
+                    }}
+                  >
+                    Team Leads
+                  </button>
+                </div>
+
                 <select
                   value={limit}
                   onChange={(e) => {
@@ -713,6 +922,7 @@ export default function TeamLeadDashboard() {
                     onDelete={handleDelete}
                     statuses={statusesQuery.data}
                     onStatusChange={handleStatusChange}
+                    showDelete={false}
                   />
                 )}
               </div>

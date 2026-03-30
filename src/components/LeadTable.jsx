@@ -5,6 +5,7 @@ export default function LeadTable({
   hideAction,
   statuses,
   onStatusChange,
+  showDelete = false,
 }) {
   const safeLeads = Array.isArray(leads) ? leads : [];
   const safeStatuses = Array.isArray(statuses) ? statuses : [];
@@ -72,12 +73,14 @@ export default function LeadTable({
                   Open
                 </button>
 
-                <button
-                  className="text-red-600 underline"
-                  onClick={() => onDelete(lead._id)}
-                >
-                  Delete
-                </button>
+                {showDelete && (
+                  <button
+                    className="text-red-600 underline"
+                    onClick={() => onDelete(lead._id)}
+                  >
+                    Delete
+                  </button>
+                )}
               </td>
             )}
           </tr>

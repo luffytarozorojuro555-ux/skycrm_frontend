@@ -2108,6 +2108,7 @@ export default function ManagerDashboard() {
                     onDelete={handleDelete}
                     statuses={statusesQuery.data}
                     onStatusChange={handleStatusChange}
+                    showDelete={true}
                   />
                 )}
               </div>

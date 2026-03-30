@@ -14,6 +14,12 @@ export default function SalesRepDashboard() {
   const [activeTab, setActiveTab] = useState("home");
   const [filter, setFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  
+  // Advanced date filtering for table
+  const [tableDateFilter, setTableDateFilter] = useState("all");
+  const [tableDateField, setTableDateField] = useState("assignedDate");
+  const [tableDateCustomStart, setTableDateCustomStart] = useState("");
+  const [tableDateCustomEnd, setTableDateCustomEnd] = useState("");
 
   // State for analytics time range
   const [timeRange, setTimeRange] = useState("Week");
@@ -63,41 +69,109 @@ const dropdownRef = useRef(null);
     state: { leadIds },
   });
 };
-  const handleDelete = () => {};
+  //const handleDelete = () => {};
   const handleStatusChange = (id, statusName) => {
     statusMutation.mutate({ id, statusName });
   };
 
-  // derive displayed leads from the `myleads` query and the filter
-  const displayedLeads = useMemo(() => {
-    const allLeads = Array.isArray(myleads.data) ? myleads.data : [];
-    if (!filter) return allLeads;
-    const q = filter.toLowerCase();
-    return allLeads.filter((l) => {
-      const name = (l.name || l.title || "").toString().toLowerCase();
-      return name.includes(q);
-    });
-  }, [myleads.data, filter]);
-
-  const handleFilterChange = (e) => {
-    setFilter(e.target.value);
-  };
-
-  // Time-filtered leads for analytics
+  // Helper: Normalize dates for comparison (midnight UTC)
   const normalizeDate = (date) => {
     if (!date) return null;
     const d = new Date(date);
     return new Date(d.getFullYear(), d.getMonth(), d.getDate());
   };
 
+  // Helper: Get assigned date from lead
+  // Assigned date = first history entry (when lead first assigned) or createdAt
+  const getAssignedDate = (lead) => {
+    if (lead.history && lead.history.length > 0) {
+      return lead.history[0].at;
+    }
+    return lead.createdAt;
+  };
+
+  // Helper: Get modified date from lead
+  // Modified date = last history entry (most recent status change) or updatedAt
+  const getModifiedDate = (lead) => {
+    if (lead.history && lead.history.length > 0) {
+      return lead.history[lead.history.length - 1].at;
+    }
+    return lead.updatedAt || lead.createdAt;
+  };
+
+  // Helper: Get date field from lead based on filter selection
+  const getLeadDateField = (lead) => {
+    if (tableDateField === "assignedDate") {
+      return getAssignedDate(lead);
+    } else if (tableDateField === "statusUpdatedDate") {
+      return getModifiedDate(lead);
+    }
+    return lead.createdAt;
+  };
+
+  // Helper: Apply date filter
+  const applyDateFilter = (lead) => {
+    if (tableDateFilter === "all") return true;
+    
+    const leadDate = normalizeDate(getLeadDateField(lead));
+    if (!leadDate) return false;
+    
+    const now = new Date();
+    const normalizedNow = normalizeDate(now);
+    
+    switch (tableDateFilter) {
+      case "today":
+        return leadDate.getTime() === normalizedNow.getTime();
+      case "week":
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const normalizedWeekAgo = normalizeDate(weekAgo);
+        return leadDate >= normalizedWeekAgo && leadDate <= normalizedNow;
+      case "month":
+        return leadDate.getMonth() === normalizedNow.getMonth() &&
+               leadDate.getFullYear() === normalizedNow.getFullYear();
+      case "year":
+        return leadDate.getFullYear() === normalizedNow.getFullYear();
+      case "custom":
+        if (!tableDateCustomStart) return false;
+        const customDate = normalizeDate(tableDateCustomStart);
+        return leadDate.getTime() === customDate.getTime();
+      case "between":
+        if (!tableDateCustomStart || !tableDateCustomEnd) return false;
+        const startD = normalizeDate(tableDateCustomStart);
+        const endD = normalizeDate(tableDateCustomEnd);
+        return leadDate >= startD && leadDate <= endD;
+      default:
+        return true;
+    }
+  };
+
+  // derive displayed leads from the `myleads` query and all filters
+  const displayedLeads = useMemo(() => {
+    let allLeads = Array.isArray(myleads.data) ? myleads.data : [];
+    
+    // Apply text search filter
+    if (filter) {
+      const q = filter.toLowerCase();
+      allLeads = allLeads.filter((l) => {
+        const name = (l.name || l.title || "").toString().toLowerCase();
+        return name.includes(q);
+      });
+    }
+    
+    // Apply date filter for table
+    allLeads = allLeads.filter(applyDateFilter);
+    
+    return allLeads;
+  }, [myleads.data, filter, tableDateFilter, tableDateField, tableDateCustomStart, tableDateCustomEnd]);
+
+  const handleFilterChange = (e) => {
+    setFilter(e.target.value);
+  };
+
   const filteredLeads = useMemo(() => {
     const allLeads = Array.isArray(myleads.data) ? myleads.data : [];
     return allLeads.filter((lead) => {
-      const getLeadDate = (lead) => {
-  return lead.updatedAt || lead.createdAt;
-};
-
-const leadDate = normalizeDate(getLeadDate(lead));
+      const leadDate = normalizeDate(lead.updatedAt || lead.createdAt);
       if (!leadDate) return false;
 
       const now = new Date();
@@ -413,54 +487,196 @@ const handleReportClick = (type) => {
             title="My Leads"
             className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600"
           >
-            <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
-              <select
-                onChange={(e) => setStatusFilter(e.target.value)}
-                value={statusFilter}
-                style={{
-                  padding: 10,
-                  borderRadius: 8,
-                  border: "1px solid #ccc",
-                  minWidth: 140,
-                  fontSize: 15,
-                }}
-              >
-                <option value="">All statuses</option>
-                {Array.isArray(statuses.data) ? statuses.data.map((s) => (
-                  <option key={s.name} value={s.name}>
-                    {s.name}
-                  </option>
-                )) : null}
-              </select>
-              <input
-                type="text"
-                placeholder="Search leads by name..."
-                value={filter}
-                onChange={handleFilterChange}
-                style={{
-                  padding: 10,
-                  borderRadius: 8,
-                  border: "1px solid #ccc",
-                  flex: 1,
-                  minWidth: 200,
-                  fontSize: 15,
-                }}
-              />
+            {/* Filters Section */}
+            <div style={{ marginBottom: 24 }}>
+              {/* Row 1: Status & Date Field Filters */}
+              <div style={{ display: "flex", gap: 16, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
+                {/* Status Filter */}
+                <div>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: "#666" }}>
+                    Filter by Status
+                  </label>
+                  <select
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    value={statusFilter}
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: 8,
+                      border: "2px solid #ddd",
+                      minWidth: 150,
+                      fontSize: 14,
+                      fontWeight: 500,
+                      backgroundColor: statusFilter ? "#eef2ff" : "#fff",
+                      borderColor: statusFilter ? "#6366f1" : "#ddd",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <option value="">All Statuses</option>
+                    {Array.isArray(statuses.data) ? statuses.data.map((s) => (
+                      <option key={s.name} value={s.name}>
+                        {s.name}
+                      </option>
+                    )) : null}
+                  </select>
+                </div>
+                
+                {/* Date Field Type Selector */}
+                <div>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: "#666" }}>
+                    Filter by Which Date?
+                  </label>
+                  <select
+                    onChange={(e) => setTableDateField(e.target.value)}
+                    value={tableDateField}
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: 8,
+                      border: "2px solid #ddd",
+                      minWidth: 180,
+                      fontSize: 14,
+                      fontWeight: 500,
+                      backgroundColor: "#f0f9ff",
+                      borderColor: "#0284c7",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <option value="assignedDate">Assigned Date (First Assigned)</option>
+                    <option value="statusUpdatedDate">Status Modified Date (Latest Change)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 2: Date Range Filters & Custom Inputs */}
+              <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
+                {/* Date Range Buttons */}
+                <div>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: "#666" }}>
+                    Date Range
+                  </label>
+                  <div style={{ display: "flex", gap: 6, background: "#f9fafb", padding: 6, borderRadius: 8, border: "1px solid #e5e7eb" }}>
+                    {[
+                      { value: "all", label: "All" },
+                      { value: "today", label: "Today" },
+                      { value: "week", label: "Week" },
+                      { value: "month", label: "Month" },
+                      { value: "year", label: "Year" },
+                      { value: "custom", label: "Custom" },
+                      { value: "between", label: "Range" }
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => setTableDateFilter(opt.value)}
+                        title={opt.value === "custom" ? "Pick a specific date" : opt.value === "between" ? "Pick a date range" : `Filter by ${opt.label}`}
+                        style={{
+                          padding: "6px 12px",
+                          border: tableDateFilter === opt.value ? "2px solid #6366f1" : "1px solid #d1d5db",
+                          background: tableDateFilter === opt.value ? "#6366f1" : "#ffffff",
+                          color: tableDateFilter === opt.value ? "#ffffff" : "#374151",
+                          borderRadius: 6,
+                          cursor: "pointer",
+                          fontSize: 13,
+                          fontWeight: tableDateFilter === opt.value ? "600" : "500",
+                          transition: "all 0.2s",
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Custom Date Inputs */}
+                {(tableDateFilter === "custom" || tableDateFilter === "between") && (
+                  <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
+                    <div>
+                      <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: "#666" }}>
+                        {tableDateFilter === "between" ? "Start Date" : "Date"}
+                      </label>
+                      <input
+                        type="date"
+                        value={tableDateCustomStart}
+                        onChange={(e) => setTableDateCustomStart(e.target.value)}
+                        max={tableDateCustomEnd}
+                        style={{
+                          padding: "8px 12px",
+                          borderRadius: 8,
+                          border: "2px solid #ddd",
+                          fontSize: 14,
+                          borderColor: tableDateCustomStart ? "#10b981" : "#ddd",
+                        }}
+                      />
+                    </div>
+                    {tableDateFilter === "between" && (
+                      <div>
+                        <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: "#666" }}>
+                          End Date
+                        </label>
+                        <input
+                          type="date"
+                          value={tableDateCustomEnd}
+                          onChange={(e) => setTableDateCustomEnd(e.target.value)}
+                          min={tableDateCustomStart}
+                          style={{
+                            padding: "8px 12px",
+                            borderRadius: 8,
+                            border: "2px solid #ddd",
+                            fontSize: 14,
+                            borderColor: tableDateCustomEnd ? "#10b981" : "#ddd",
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Search Input */}
+                <div style={{ display: "flex", alignItems: "flex-end", flex: 1, minWidth: 200 }}>
+                  <div style={{ width: "100%" }}>
+                    <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: "#666" }}>
+                      Search
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Search by name, phone, email..."
+                      value={filter}
+                      onChange={handleFilterChange}
+                      style={{
+                        padding: "8px 12px",
+                        borderRadius: 8,
+                        border: "2px solid #ddd",
+                        width: "100%",
+                        fontSize: 14,
+                        borderColor: filter ? "#3b82f6" : "#ddd",
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Active Filters Summary */}
+              {(statusFilter || tableDateFilter !== "all" || filter) && (
+                <div style={{ marginTop: 12, padding: 10, backgroundColor: "#f0f9ff", borderLeft: "4px solid #0284c7", borderRadius: 4 }}>
+                  <span style={{ fontSize: 13, color: "#0369a1" }}>
+                    <strong>Active filters:</strong>{" "}
+                    {statusFilter && <span className="badge">Status: {statusFilter}</span>}
+                    {" "}
+                    {tableDateFilter !== "all" && <span className="badge">Date: {tableDateFilter}</span>}
+                    {" "}
+                    {filter && <span className="badge">Search: "{filter}"</span>}
+                  </span>
+                </div>
+              )}
             </div>
+
             {myleads.isLoading || statuses.isLoading ? (
               <p className="text-gray-700 dark:text-gray-300 p-5">Loading...</p>
             ) : (
               <LeadTable
-                leads={filteredLeads.filter((l) => {
-  if (!filter) return true;
-  const q = filter.toLowerCase();
-  const name = (l.name || l.title || "").toLowerCase();
-  return name.includes(q);
-})}
+                leads={displayedLeads}
                 onOpen={onOpen}
-                onDelete={handleDelete}
                 statuses={Array.isArray(statuses.data) ? statuses.data : []}
                 onStatusChange={handleStatusChange}
+                showDelete={false}
               />
             )}
           </Card>
