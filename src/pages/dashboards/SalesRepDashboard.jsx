@@ -13,6 +13,7 @@ export default function SalesRepDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("home");
   const [filter, setFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
 
   // State for analytics time range
   const [timeRange, setTimeRange] = useState("Week");
@@ -28,9 +29,14 @@ const dropdownRef = useRef(null);
 
   // Fetch only my leads (assigned to current user)
   const myleads = useQuery({
-    queryKey: ["leads", "assignedTo", user?.id],
+    queryKey: ["leads", "assignedTo", user?.id, statusFilter],
     queryFn: async () => {
-      const res = await api.get("/leads?assignedTo=me");
+      const params = new URLSearchParams();
+      params.append("assignedTo", "me");
+      if (statusFilter) {
+        params.append("status", statusFilter);
+      }
+      const res = await api.get(`/leads?${params.toString()}`);
       return res.data.leads; 
     },
     enabled: !!user?.userId,
@@ -407,13 +413,38 @@ const handleReportClick = (type) => {
             title="My Leads"
             className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600"
           >
-            <div className="p-4">
+            <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+              <select
+                onChange={(e) => setStatusFilter(e.target.value)}
+                value={statusFilter}
+                style={{
+                  padding: 10,
+                  borderRadius: 8,
+                  border: "1px solid #ccc",
+                  minWidth: 140,
+                  fontSize: 15,
+                }}
+              >
+                <option value="">All statuses</option>
+                {Array.isArray(statuses.data) ? statuses.data.map((s) => (
+                  <option key={s.name} value={s.name}>
+                    {s.name}
+                  </option>
+                )) : null}
+              </select>
               <input
                 type="text"
                 placeholder="Search leads by name..."
                 value={filter}
                 onChange={handleFilterChange}
-                className="w-full p-2 border border-gray-300 rounded-md dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+                style={{
+                  padding: 10,
+                  borderRadius: 8,
+                  border: "1px solid #ccc",
+                  flex: 1,
+                  minWidth: 200,
+                  fontSize: 15,
+                }}
               />
             </div>
             {myleads.isLoading || statuses.isLoading ? (
