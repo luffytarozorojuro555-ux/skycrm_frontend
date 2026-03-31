@@ -65,6 +65,10 @@ export default function ManagerDashboard() {
   const [showTeamSelectionModal, setShowTeamSelectionModal] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
 
+  // Delete mode states
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [selectedLeadIds, setSelectedLeadIds] = useState([]);
+
   const nav = useNavigate();
   // Add missing state and query client
   const qc = useQueryClient();
@@ -240,12 +244,27 @@ export default function ManagerDashboard() {
     setShowTeamSelectionModal(true);
   };
 
-  const handleAssignToTeam = (teamId) => {
+  const handleAssignToTeam = (teamId, customAssignments = null) => {
     setIsAssigning(true);
-    bulkAssignMutation.mutate({
+    
+    const payload = {
       leadIds: selectedLeads,
       teamId: teamId,
-    });
+    };
+
+    // Add custom assignments if provided
+    if (customAssignments) {
+      console.log("Assigning leads with custom distribution", {
+        teamId,
+        leadCount: selectedLeads.length,
+        customAssignments
+      });
+      payload.assignments = customAssignments;
+    } else {
+      console.log("Assigning leads with equal distribution (no custom assignments)");
+    }
+
+    bulkAssignMutation.mutate(payload);
   };
 
   const handleTeamAdded = () => {
@@ -446,13 +465,49 @@ export default function ManagerDashboard() {
     },
   });
 
+  const bulkDeleteLeadsMutation = useMutation({
+    mutationFn: async (leadIds) => {
+      return await api.delete("/leads/bulk-delete", {
+        data: { leadIds },
+      });
+    },
+
+    onSuccess: (response) => {
+      alert(`${response.data.deletedCount} lead${response.data.deletedCount !== 1 ? "s" : ""} deleted successfully`);
+      qc.invalidateQueries({ queryKey: ["leads"] });
+      // Reset delete mode
+      setIsDeleteMode(false);
+      setSelectedLeadIds([]);
+    },
+
+    onError: (error) => {
+      console.error("Delete failed:", error);
+      alert("Failed to delete leads: " + (error.response?.data?.error || error.message));
+    },
+  });
+
   const handleDeleteAllLeads = async () => {
+    console.log("Delete mode:", isDeleteMode);
+    console.log("Selected leads:", selectedLeadIds);
+    
+    // Enable delete mode instead of immediately deleting
+    setIsDeleteMode(true);
+    setSelectedLeadIds([]);
+  };
+
+  const handleDeleteSelectedLeads = () => {
     const confirmDelete = window.confirm(
-      "Are you sure you want to delete all leads?",
+      `Are you sure you want to delete ${selectedLeadIds.length} lead${selectedLeadIds.length !== 1 ? "s" : ""}?`,
     );
     if (!confirmDelete) return;
 
-    deleteAllLeadsMutation.mutate();
+    console.log("Selected Leads for deletion:", selectedLeadIds);
+    bulkDeleteLeadsMutation.mutate(selectedLeadIds);
+  };
+
+  const handleCancelDelete = () => {
+    setIsDeleteMode(false);
+    setSelectedLeadIds([]);
   };
 
   return (
@@ -1999,10 +2054,35 @@ export default function ManagerDashboard() {
                   onClick={handleDeleteAllLeads}
                   className="bg-blue-600 text-white border border-blue-600 px-4 py-1 rounded-md font-medium hover:bg-blue-700 hover:border-blue-700 transition duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-400"
                 >
-                  Delete All Leads
+                  Delete Leads
                 </button>
               </div>
               <div className="flex items-center gap-3 flex-1 justify-end ml-4">
+                {isDeleteMode && (
+                  <>
+                    <button
+                      onClick={handleDeleteSelectedLeads}
+                      disabled={selectedLeadIds.length === 0}
+                      className={`
+        px-5 py-2 rounded-lg font-bold text-sm
+        ${
+                        selectedLeadIds.length === 0
+                          ? "bg-gray-400 cursor-not-allowed opacity-60"
+                          : "bg-red-600 hover:bg-red-700 cursor-pointer"
+                      }
+        text-white
+      `}
+                    >
+                      Delete ({selectedLeadIds.length})
+                    </button>
+                    <button
+                      onClick={handleCancelDelete}
+                      className="px-5 py-2 rounded-lg font-bold text-sm bg-gray-500 hover:bg-gray-600 cursor-pointer text-white transition duration-200"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                )}
                 <input
                   value={leadSearchTerm}
                   onChange={handleLeadSearch}
@@ -2079,9 +2159,9 @@ export default function ManagerDashboard() {
             {/* Table */}
             <div className="w-full overflow-x-auto">
               <div className="w-full rounded-xl p-5 shadow-md shadow-black/5">
-                {showUnassignedLeads ? (
-                  unassignedLeadsQuery.isLoading ? (
-                    <p>Loading unassigned leads...</p>
+                {showUnassignedLeads || isDeleteMode ? (
+                  (showUnassignedLeads && unassignedLeadsQuery.isLoading) || (isDeleteMode && leadsQuery.isLoading) ? (
+                    <p>Loading...</p>
                   ) : (
                     <LeadTableWithSelection
                       leads={
@@ -2094,9 +2174,9 @@ export default function ManagerDashboard() {
                       statuses={statusesQuery.data}
                       onStatusChange={handleStatusChange}
                       showSelection={true}
-                      selectedLeads={selectedLeads}
-                      onSelectionChange={handleSelectionChange}
-                      onSelectAll={handleSelectAllLeads}
+                      selectedLeads={isDeleteMode ? selectedLeadIds : selectedLeads}
+                      onSelectionChange={isDeleteMode ? setSelectedLeadIds : handleSelectionChange}
+                      onSelectAll={isDeleteMode ? (ids) => setSelectedLeadIds(ids) : handleSelectAllLeads}
                     />
                   )
                 ) : leadsQuery.isLoading ? (
