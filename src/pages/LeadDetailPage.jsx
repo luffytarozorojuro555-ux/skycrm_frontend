@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
+import { FaWhatsapp } from "react-icons/fa";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   User,
@@ -138,6 +139,14 @@ export default function LeadDetailPage() {
     );
   };
 
+let formattedPhone = null;
+let message = null;
+
+if (editForm.phone) {
+  formattedPhone = `+91${editForm.phone.replace(/\D/g, "").slice(-10)}`;
+  message = encodeURIComponent("Hello from SKY-CRM!");
+}
+  
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       {/* Header */}
@@ -197,13 +206,33 @@ export default function LeadDetailPage() {
                 }
               />
 
-              <InputField
-                label="Phone Number"
-                icon={<Phone size={16} />}
-                value={editForm.phone}
-                onChange={() => {}}
-                readOnly
-              />
+              <div>
+  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+    Phone Number
+  </label>
+
+  <div className="mt-1 relative flex items-center rounded-lg border border-gray-600 px-3 py-2 shadow-sm focus-within:ring-2 focus-within:ring-purple-200">
+    <Phone size={16} />
+
+    <input
+      type="text"
+      className="ml-2 flex-1 outline-none dark:bg-gray-900 dark:text-gray-100 pr-10"
+      value={editForm.phone}
+      readOnly
+    />
+
+    {formattedPhone && (
+      <a
+        href={`https://wa.me/${formattedPhone}?text=${message}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute right-3 text-green-500 hover:text-green-700"
+      >
+        <FaWhatsapp size={18} />
+      </a>
+    )}
+  </div>
+</div>
 
               <InputField
                 label="Email Address"
