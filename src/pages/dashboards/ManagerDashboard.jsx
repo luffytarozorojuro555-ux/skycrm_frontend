@@ -1760,8 +1760,8 @@ export default function ManagerDashboard() {
                   </option>
                 ))}
               </select>
-
-              <button
+            
+              {/* <button
                 style={{
                   padding: "10px 18px",
                   background: "#10b981",
@@ -1779,7 +1779,8 @@ export default function ManagerDashboard() {
                 }}
               >
                 Refresh
-              </button>
+              </button>  */}
+              
               <button
                 style={{
                   padding: "10px 18px",
