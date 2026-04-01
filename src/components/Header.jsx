@@ -192,7 +192,6 @@ export default function Header({ sidebarOpen, setSidebarOpen }) {
           className="fixed top-4 right-4 z-50 flex flex-col items-end"
         >
           <div className="flex items-center gap-x-6 mt-4">
-            <NotificationIcon />
             {/* Main Floating Button */}
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}

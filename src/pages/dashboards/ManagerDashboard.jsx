@@ -10,6 +10,7 @@ import AddTeamLeadModal from "../../components/AddTeamLeadModal";
 import LeadTable from "../../components/LeadTable";
 import LeadTableWithSelection from "../../components/LeadTableWithSelection";
 import TeamSelectionModal from "../../components/TeamSelectionModal";
+import socket from "../../socket.js";
 import {
   ResponsiveContainer,
   PieChart,
@@ -33,6 +34,7 @@ import {
 import CustomDateRange from "../../components/CustomDateRange";
 import handleLogout from "../../logoutHandler";
 import { getUserFromToken } from "../../utils/auth";
+import NotificationIcon from "../../components/NotificationIcon";
 
 export default function ManagerDashboard() {
   const [activeTab, setActiveTab] = useState("home");
@@ -82,6 +84,43 @@ export default function ManagerDashboard() {
   });
   const [successMsg, setSuccessMsg] = useState("");
   const [timeRange, setTimeRange] = useState("Week"); // Week | Month | Year
+
+  const user = getUserFromToken();
+
+  const [liveNotifications, setLiveNotifications] = useState([]);
+
+  const { data: dbNotifications } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: async () => {
+      const res = await api.get("/notifications");
+      return res.data;
+    },
+  });
+  const allNotifications = [
+    ...liveNotifications,
+    ...(dbNotifications || []).filter(
+      (db) => !liveNotifications.some((l) => l.message === db.message),
+    ),
+  ];
+
+  useEffect(() => {
+    if (user?.userId) {
+      socket.emit("register", user.userId);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handler = (data) => {
+      console.log("🔥 Incoming notification:", data);
+      setLiveNotifications((prev) => [data, ...prev]);
+    };
+
+    socket.on("notification", handler);
+
+    return () => {
+      socket.off("notification", handler);
+    };
+  }, []);
 
   // Fetch teams, leads, statuses
   const teams = useQuery({
@@ -133,7 +172,7 @@ export default function ManagerDashboard() {
     queryKey: ["leads", "unassigned"],
     queryFn: async () => {
       const response = await api.get("/leads", {
-        params: { limit: 10000, page: 1, unassigned: true},
+        params: { limit: 10000, page: 1, unassigned: true },
       });
 
       return response.data.leads;
@@ -510,14 +549,28 @@ export default function ManagerDashboard() {
     setSelectedLeadIds([]);
   };
 
+  const hasUnread = dbNotifications?.some((n) => !n.isRead);
+
   return (
     <div className="min-h-screen  dark:bg-gray-800 w-full p-6 overflow-x-hidden transition-colors duration-200">
-      <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-        Manager Dashboard
-      </h1>
-      <h2 style={{ color: "gray", fontWeight: "normal", fontSize: "1.2rem" }}>
-        Manager Analytics
-      </h2>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+            Manager Dashboard
+          </h1>
+          <h2
+            style={{ color: "gray", fontWeight: "normal", fontSize: "1.2rem" }}
+          >
+            Manager Analytics
+          </h2>
+        </div>
+        <div className="px-16">
+          <NotificationIcon
+            hasNotification={hasUnread}
+            notifications={allNotifications}
+          />
+        </div>
+      </div>
       <aside className="w-full border-b border-gray-200 px-2 sm:px-4 py-2 flex gap-3 sm:gap-4 items-center overflow-x-auto no-scrollbar">
         {[
           { tab: "home", label: "Home", color: "#2563eb" },

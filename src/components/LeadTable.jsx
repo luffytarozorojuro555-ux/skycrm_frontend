@@ -1,3 +1,5 @@
+import { getUserFromToken } from "../utils/auth";
+
 export default function LeadTable({
   leads,
   onOpen,
@@ -11,7 +13,7 @@ export default function LeadTable({
   const safeStatuses = Array.isArray(statuses) ? statuses : [];
 
   const sortedLeads = [...safeLeads].sort(
-    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
   );
 
   return (
@@ -44,8 +46,7 @@ export default function LeadTable({
                   className="border rounded px-2 py-1"
                   value={lead.status?.name || ""}
                   onChange={(e) =>
-                    onStatusChange &&
-                    onStatusChange(lead._id, e.target.value)
+                    onStatusChange && onStatusChange(lead._id, e.target.value)
                   }
                 >
                   <option value="">Change status...</option>
@@ -60,20 +61,25 @@ export default function LeadTable({
               )}
             </td>
 
-            <td className="px-2 py-1">{lead?.assignedTo?.email ?? "Not assigned"}</td>
+            <td className="px-2 py-1">
+              {lead?.assignedTo?.email ?? "Not assigned"}
+            </td>
 
             {!hideAction && (
               <td className="whitespace-nowrap px-2 py-1">
                 <button
                   className="text-blue-600 underline mr-2"
                   onClick={() =>
-                    onOpen(lead, sortedLeads.map((l) => l._id))
+                    onOpen(
+                      lead,
+                      sortedLeads.map((l) => l._id),
+                    )
                   }
                 >
                   Open
                 </button>
 
-                {showDelete && (
+                {getUserFromToken()?.roleName == "Sales Manager" && (
                   <button
                     className="text-red-600 underline"
                     onClick={() => onDelete(lead._id)}

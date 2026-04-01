@@ -5,6 +5,8 @@ import api from "../../services/api";
 import Card from "../../components/Card";
 import LeadTable from "../../components/LeadTable";
 import handleLogout from "../../logoutHandler";
+import NotificationIcon from "../../components/NotificationIcon";
+import socket from "../../socket";
 import CustomDateRange from "../../components/CustomDateRange";
 import { getUserFromToken } from "../../utils/auth";
 
@@ -27,23 +29,55 @@ export default function SalesRepDashboard() {
   const [endDate, setEndDate] = useState(null);
   const [showCustomDateRange, setShowCustomDateRange] = useState(false);
 
-const [showOptions, setShowOptions] = useState(false);
-const [customDates, setCustomDates] = useState({ start: "", end: "" });
-const dropdownRef = useRef(null);
-  
+  const [showOptions, setShowOptions] = useState(false);
+  const [customDates, setCustomDates] = useState({ start: "", end: "" });
+  const dropdownRef = useRef(null);
+
   const user = getUserFromToken();
+
+  const [liveNotifications, setLiveNotifications] = useState([]);
+
+  const { data: dbNotifications } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: async () => {
+      const res = await api.get("/notifications");
+      return res.data;
+    },
+  });
+  const allNotifications = [
+    ...liveNotifications,
+    ...(dbNotifications || []).filter(
+      (db) => !liveNotifications.some((l) => l.message === db.message),
+    ),
+  ];
+
+  useEffect(() => {
+    const user = getUserFromToken();
+
+    if (user?.userId) {
+      socket.emit("register", user.userId);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handler = (data) => {
+      console.log("🔥 Incoming notification:", data);
+      setLiveNotifications((prev) => [data, ...prev]);
+    };
+
+    socket.on("notification", handler);
+
+    return () => {
+      socket.off("notification", handler);
+    };
+  }, []);
 
   // Fetch only my leads (assigned to current user)
   const myleads = useQuery({
-    queryKey: ["leads", "assignedTo", user?.id, statusFilter],
+    queryKey: ["leads", "assignedTo", user?.userId],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      params.append("assignedTo", "me");
-      if (statusFilter) {
-        params.append("status", statusFilter);
-      }
-      const res = await api.get(`/leads?${params.toString()}`);
-      return res.data.leads; 
+      const res = await api.get("/leads?assignedTo=me");
+      return res.data.leads;
     },
     enabled: !!user?.userId,
     refetchOnWindowFocus: true,
@@ -65,11 +99,11 @@ const dropdownRef = useRef(null);
     },
   });
   const onOpen = (lead, leadIds) => {
-  navigate(`/leads/${lead._id}`, {
-    state: { leadIds },
-  });
-};
-  //const handleDelete = () => {};
+    navigate(`/leads/${lead._id}`, {
+      state: { leadIds },
+    });
+  };
+  const handleDelete = () => {};
   const handleStatusChange = (id, statusName) => {
     statusMutation.mutate({ id, statusName });
   };
@@ -171,7 +205,11 @@ const dropdownRef = useRef(null);
   const filteredLeads = useMemo(() => {
     const allLeads = Array.isArray(myleads.data) ? myleads.data : [];
     return allLeads.filter((lead) => {
-      const leadDate = normalizeDate(lead.updatedAt || lead.createdAt);
+      const getLeadDate = (lead) => {
+        return lead.updatedAt || lead.createdAt;
+      };
+
+      const leadDate = normalizeDate(getLeadDate(lead));
       if (!leadDate) return false;
 
       const now = new Date();
@@ -216,36 +254,36 @@ const dropdownRef = useRef(null);
       ? Math.round((newCount / totalFilteredLeads) * 100)
       : 0;
 
-const handleReportClick = (type) => {
-  const now = new Date();
-  let start, end;
+  const handleReportClick = (type) => {
+    const now = new Date();
+    let start, end;
 
-  if (type === "today") {
-    start = new Date(now.setHours(0, 0, 0, 0));
-    end = new Date();
-  } else if (type === "week") {
-    start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    end = new Date();
-  } else if (type === "15days") {
-    start = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000);
-    end = new Date();
-  } else if (type === "month") {
-    start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    end = new Date();
-  } else if (type === "3month") {
-    start = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-    end = new Date();
-  } else if (type === "custom") {
-    start = new Date(customDates.start);
-    end = new Date(customDates.end);
-  }
+    if (type === "today") {
+      start = new Date(now.setHours(0, 0, 0, 0));
+      end = new Date();
+    } else if (type === "week") {
+      start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      end = new Date();
+    } else if (type === "15days") {
+      start = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000);
+      end = new Date();
+    } else if (type === "month") {
+      start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      end = new Date();
+    } else if (type === "3month") {
+      start = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+      end = new Date();
+    } else if (type === "custom") {
+      start = new Date(customDates.start);
+      end = new Date(customDates.end);
+    }
 
-  setStartDate(start);
-  setEndDate(end);
-  setTimeRange("Custom");
-  setShowOptions(false);
-};
-  
+    setStartDate(start);
+    setEndDate(end);
+    setTimeRange("Custom");
+    setShowOptions(false);
+  };
+
   const statItems = [
     {
       key: "total",
@@ -274,15 +312,27 @@ const handleReportClick = (type) => {
     },
   ];
 
+  const hasUnread = dbNotifications?.some((n) => !n.isRead);
+
   return (
     <div className="min-h-screen w-full p-6 overflow-x-hidden bg-white dark:bg-gray-800">
       {/* Header */}
-      <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-        Sales Representatives Dashboard
-      </h1>
-      <h2 className="text-gray-500 dark:text-gray-300 text-lg font-normal">
-        Sales Representatives Analytics
-      </h2>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+            Sales Representatives Dashboard
+          </h1>
+          <h2 className="text-gray-500 dark:text-gray-300 text-lg font-normal">
+            Sales Representatives Analytics
+          </h2>
+        </div>
+        <div className="px-16">
+          <NotificationIcon
+            hasNotification={hasUnread}
+            notifications={allNotifications}
+          />
+        </div>
+      </div>
 
       {/* ---- Horizontal tab buttons ---- */}
       <aside
@@ -336,128 +386,127 @@ const handleReportClick = (type) => {
 
       <main className="flex-1 p-0 mt-4">
         {activeTab === "home" && (
-          
-            <Card
-              title="My Analytics Overview"
-              className="mt-6  dark:bg-gray-800 text-white"
-            >
-              <div className="p-5">
-                <div className="mb-4 col-span-full">
-                  {/* Header Row */}
-                  <div className="flex justify-between items-center flex-wrap gap-3 mb-3">
-                    <h2 className="text-lg font-semibold">Lead Stats</h2>
+          <Card
+            title="My Analytics Overview"
+            className="mt-6  dark:bg-gray-800 text-white"
+          >
+            <div className="p-5">
+              <div className="mb-4 col-span-full">
+                {/* Header Row */}
+                <div className="flex justify-between items-center flex-wrap gap-3 mb-3">
+                  <h2 className="text-lg font-semibold">Lead Stats</h2>
 
-                    <div className="flex items-center gap-3">
-                      {/* Remaining Progress */}
-                      <div className="flex items-center gap-2 border border-gray-600 rounded-lg px-2 py-1.5">
-                        <svg
-                          width="22"
-                          height="22"
-                          viewBox="0 0 24 24"
-                          className="-rotate-90"
-                          aria-hidden
-                        >
-                          {(() => {
-                            const r = 8;
-                            const c = 2 * Math.PI * r;
-                            const off = c * (1 - remainingPct / 100);
-                            return [
-  <circle
-    key="bg"
-    cx="12"
-    cy="12"
-    r={r}
-    stroke="#4b5563"
-    strokeWidth="4"
-    fill="none"
-  />,
-  <circle
-    key="progress"
-    cx="12"
-    cy="12"
-    r={r}
-    stroke="#22c55e"
-    strokeWidth="4"
-    fill="none"
-    strokeDasharray={c}
-    strokeDashoffset={off}
-    strokeLinecap="round"
-    style={{
-      transition: "stroke-dashoffset 400ms ease",
-    }}
-  />
-];
-                          })()}
-                        </svg>
-                        <div className="text-xs text-gray-700 dark:text-gray-200">
-                          Remaining:{" "}
-                          <span className="text-gray-80 font-semibold">
-                            {remainingPct}%
-                          </span>
-                        </div>
+                  <div className="flex items-center gap-3">
+                    {/* Remaining Progress */}
+                    <div className="flex items-center gap-2 border border-gray-600 rounded-lg px-2 py-1.5">
+                      <svg
+                        width="22"
+                        height="22"
+                        viewBox="0 0 24 24"
+                        className="-rotate-90"
+                        aria-hidden
+                      >
+                        {(() => {
+                          const r = 8;
+                          const c = 2 * Math.PI * r;
+                          const off = c * (1 - remainingPct / 100);
+                          return [
+                            <circle
+                              key="bg"
+                              cx="12"
+                              cy="12"
+                              r={r}
+                              stroke="#4b5563"
+                              strokeWidth="4"
+                              fill="none"
+                            />,
+                            <circle
+                              key="progress"
+                              cx="12"
+                              cy="12"
+                              r={r}
+                              stroke="#22c55e"
+                              strokeWidth="4"
+                              fill="none"
+                              strokeDasharray={c}
+                              strokeDashoffset={off}
+                              strokeLinecap="round"
+                              style={{
+                                transition: "stroke-dashoffset 400ms ease",
+                              }}
+                            />,
+                          ];
+                        })()}
+                      </svg>
+                      <div className="text-xs text-gray-700 dark:text-gray-200">
+                        Remaining:{" "}
+                        <span className="text-gray-80 font-semibold">
+                          {remainingPct}%
+                        </span>
                       </div>
                     </div>
-                      {/* Time Range Buttons */}
-                      <div className="relative" ref={dropdownRef}>
-  <button
-    onClick={() => setShowOptions((prev) => !prev)}
-    className="px-3 py-1.5 rounded-md text-white"
-  >
-    Data
-  </button>
+                  </div>
+                  {/* Time Range Buttons */}
+                  <div className="relative" ref={dropdownRef}>
+                    <button
+                      onClick={() => setShowOptions((prev) => !prev)}
+                      className="px-3 py-1.5 rounded-md text-white"
+                    >
+                      Data
+                    </button>
 
-  {showOptions && (
-    <div className="absolute top-full right-0 bg-white border shadow-md p-2 z-50 w-48">
-      {[
-        ["today", "Today"],
-        ["week", "1 Week"],
-        ["15days", "15 Days"],
-        ["month", "1 Month"],
-        ["3month", "3 Months"],
-      ].map(([key, label]) => (
-        <div
-          key={key}
-          onClick={() => handleReportClick(key)}
-          className="cursor-pointer px-2 py-1 hover:bg-gray-100"
-        >
-          {label}
-        </div>
-      ))}
+                    {showOptions && (
+                      <div className="absolute top-full right-0 bg-white border shadow-md p-2 z-50 w-48">
+                        {[
+                          ["today", "Today"],
+                          ["week", "1 Week"],
+                          ["15days", "15 Days"],
+                          ["month", "1 Month"],
+                          ["3month", "3 Months"],
+                        ].map(([key, label]) => (
+                          <div
+                            key={key}
+                            onClick={() => handleReportClick(key)}
+                            className="cursor-pointer px-2 py-1 hover:bg-gray-100"
+                          >
+                            {label}
+                          </div>
+                        ))}
 
-      <div className="border-t mt-2 pt-2">
-        <input
-          type="date"
-          value={customDates.start}
-          onChange={(e) =>
-            setCustomDates((prev) => ({
-              ...prev,
-              start: e.target.value,
-            }))
-          }
-          className="w-full mb-1 border px-2 py-1"
-        />
-        <input
-          type="date"
-          value={customDates.end}
-          onChange={(e) =>
-            setCustomDates((prev) => ({
-              ...prev,
-              end: e.target.value,
-            }))
-          }
-          className="w-full mb-2 border px-2 py-1"
-        />
+                        <div className="border-t mt-2 pt-2">
+                          <input
+                            type="date"
+                            value={customDates.start}
+                            onChange={(e) =>
+                              setCustomDates((prev) => ({
+                                ...prev,
+                                start: e.target.value,
+                              }))
+                            }
+                            className="w-full mb-1 border px-2 py-1"
+                          />
+                          <input
+                            type="date"
+                            value={customDates.end}
+                            onChange={(e) =>
+                              setCustomDates((prev) => ({
+                                ...prev,
+                                end: e.target.value,
+                              }))
+                            }
+                            className="w-full mb-2 border px-2 py-1"
+                          />
 
-        <button
-          onClick={() => handleReportClick("custom")}
-          className="w-full bg-green-600 text-white py-1"
-        >
-          Apply
-        </button>
-      </div>
-    </div>
-  )}
-</div>
+                          <button
+                            onClick={() => handleReportClick("custom")}
+                            className="w-full bg-green-600 text-white py-1"
+                          >
+                            Apply
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Stats Grid */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -478,8 +527,8 @@ const handleReportClick = (type) => {
                   </div>
                 </div>
               </div>
-              </div>
-            </Card>
+            </div>
+          </Card>
         )}
 
         {activeTab === "data" && (
@@ -672,7 +721,12 @@ const handleReportClick = (type) => {
               <p className="text-gray-700 dark:text-gray-300 p-5">Loading...</p>
             ) : (
               <LeadTable
-                leads={displayedLeads}
+                leads={filteredLeads.filter((l) => {
+                  if (!filter) return true;
+                  const q = filter.toLowerCase();
+                  const name = (l.name || l.title || "").toLowerCase();
+                  return name.includes(q);
+                })}
                 onOpen={onOpen}
                 statuses={Array.isArray(statuses.data) ? statuses.data : []}
                 onStatusChange={handleStatusChange}

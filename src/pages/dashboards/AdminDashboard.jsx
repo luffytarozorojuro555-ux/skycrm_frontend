@@ -43,7 +43,7 @@ export default function AdminDashboard() {
     queryFn: async () =>
       (
         await api.get(
-          `/users/paginationUsersList?page=${pageUser}&limit=${limitUser}`
+          `/users/paginationUsersList?page=${pageUser}&limit=${limitUser}`,
         )
       ).data,
     keepPreviousData: true,
@@ -54,11 +54,7 @@ export default function AdminDashboard() {
   const leadsPagination = useQuery({
     queryKey: ["leadsPagination", pageLead, limitLead],
     queryFn: async () =>
-      (
-        await api.get(
-          `/leads?page=${pageLead}&limit=${limitLead}`
-        )
-      ).data,
+      (await api.get(`/leads?page=${pageLead}&limit=${limitLead}`)).data,
     keepPreviousData: true,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
@@ -92,13 +88,17 @@ export default function AdminDashboard() {
     },
     {
       title: "Pending Leads",
-      value: (leads.data?.totalLeads - ((leads.data?.statusCounts?.["Enrolled"] + leads.data?.statusCounts?.["Not Interested"])  || 0)) || 0,
+      value:
+        leads.data?.totalLeads -
+          (leads.data?.statusCounts?.["Enrolled"] +
+            leads.data?.statusCounts?.["Not Interested"] || 0) || 0,
       icon: <Clock className="w-6 h-6 text-red-600" />,
     },
   ];
 
   const [showManagerPopup, setShowManagerPopup] = useState(false);
   const [selectedTeamId, setSelectedTeamId] = useState(null);
+  const [currentManager, setTeamManager] = useState(null);
   const [selectedManager, setSelectedManager] = useState(null);
 
   const managersQuery = useQuery({
@@ -124,7 +124,7 @@ export default function AdminDashboard() {
       }
     },
   });
-  
+
   const queryClient = useQueryClient();
   const assignManager = useMutation({
     mutationFn: async ({ teamId, managerId }) => {
@@ -291,6 +291,7 @@ export default function AdminDashboard() {
                         <button
                           onClick={() => {
                             setSelectedTeamId(team._id);
+                            setTeamManager(team.manager);
                             setShowManagerPopup(true);
                           }}
                           className="text-blue-600 underline"
@@ -298,7 +299,16 @@ export default function AdminDashboard() {
                           Show available managers
                         </button>
                       ) : (
-                        "Not Applicable"
+                        <button
+                          onClick={() => {
+                            setSelectedTeamId(team._id);
+                            setTeamManager(team.manager);
+                            setShowManagerPopup(true);
+                          }}
+                          className="text-blue-600 underline"
+                        >
+                          Change manager
+                        </button>
                       )}
                     </td>
                   </tr>
@@ -411,20 +421,24 @@ export default function AdminDashboard() {
                 <p className="text-gray-500">Loading managers...</p>
               ) : (
                 <ul className="space-y-2">
-                  {managersQuery.data?.map((manager) => (
-                    <li
-                      key={manager._id}
-                      onClick={() => setSelectedManager(manager)} // <--- store selected
-                      className={`p-3 border rounded-lg cursor-pointer transition 
+                  {managersQuery.data
+                    ?.filter(
+                      (manager) => manager._id !== currentManager._id,
+                    )
+                    .map((manager) => (
+                      <li
+                        key={manager._id}
+                        onClick={() => setSelectedManager(manager)} // <--- store selected
+                        className={`p-3 border rounded-lg cursor-pointer transition 
                   ${
                     selectedManager?._id === manager._id
                       ? "bg-blue-100 dark:bg-blue-800 border-blue-500"
                       : "hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
-                    >
-                      {manager?.name} ({manager?.email})
-                    </li>
-                  ))}
+                      >
+                        {manager?.name} ({manager?.email})
+                      </li>
+                    ))}
                 </ul>
               )}
             </div>

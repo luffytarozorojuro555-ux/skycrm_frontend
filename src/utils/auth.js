@@ -26,6 +26,7 @@ export const clearToken = () => {
   localStorage.removeItem('rememberMe')
 }
 
+
 export const isRememberMe = () => localStorage.getItem('rememberMe') === 'true'
 
 export const isRemembered = () => {

@@ -8,6 +8,8 @@ import LeadTable from "../../components/LeadTable";
 import handleLogout from "../../logoutHandler";
 import CustomDateRange from "../../components/CustomDateRange";
 import NotificationIcon from "../../components/NotificationIcon";
+import socket from "../../socket.js";
+import { getUserFromToken } from "../../utils/auth";
 
 export default function TeamLeadDashboard() {
   const qc = useQueryClient();
@@ -31,6 +33,45 @@ export default function TeamLeadDashboard() {
   const [page, setPage] = useState(1);
   const [displayedLeads, setDisplayedLeads] = useState([]);
 
+  const user = getUserFromToken();
+
+  const [liveNotifications, setLiveNotifications] = useState([]);
+
+  const { data: dbNotifications } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: async () => {
+      const res = await api.get("/notifications");
+      return res.data;
+    },
+  });
+  const allNotifications = [
+    ...liveNotifications,
+    ...(dbNotifications || []).filter(
+      (db) => !liveNotifications.some((l) => l.message === db.message),
+    ),
+  ];
+
+  useEffect(() => {
+    const user = getUserFromToken();
+
+    if (user?.userId) {
+      socket.emit("register", user.userId);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handler = (data) => {
+      console.log("🔥 Incoming notification:", data);
+      setLiveNotifications((prev) => [data, ...prev]);
+    };
+
+    socket.on("notification", handler);
+
+    return () => {
+      socket.off("notification", handler);
+    };
+  }, []);
+
   const leadsQuery = useQuery({
     queryKey: ["leads", filter, page, limit, dataScope],
     queryFn: async () => {
@@ -52,8 +93,8 @@ export default function TeamLeadDashboard() {
     queryFn: async () => {
       const response = await api.get("/leads", {
         params: {
-          scope: "team", 
-          limit: 1000, 
+          scope: "team",
+          limit: 1000,
         },
       });
 
@@ -252,8 +293,8 @@ export default function TeamLeadDashboard() {
     : 0;
 
   const totalLeads = Array.isArray(teamLeadsQuery.data)
-  ? teamLeadsQuery.data
-  : [];
+    ? teamLeadsQuery.data
+    : [];
 
   const filteredleads = totalLeads.filter((lead) => {
     const leadDate = normalizeDate(lead.createdAt);
@@ -328,8 +369,28 @@ export default function TeamLeadDashboard() {
 
   const handleLogoutClick = () => handleLogout(nav);
 
+  const hasUnread = dbNotifications?.some((n) => !n.isRead);
+
   return (
     <div className="min-h-screen  w-full p-6 overflow-x-hidden">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+            Team Lead Dashboard
+          </h1>
+          <h2
+            style={{ color: "gray", fontWeight: "normal", fontSize: "1.2rem" }}
+          >
+            Team Analytics
+          </h2>
+        </div>
+        <div className="px-16">
+          <NotificationIcon
+            hasNotification={hasUnread}
+            notifications={allNotifications}
+          />
+        </div>
+      </div>
       <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
         Team Lead Dashboard
       </h1>
